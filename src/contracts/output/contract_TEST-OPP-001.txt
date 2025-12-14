@@ -1,0 +1,39 @@
+SOLAR INSTALLATION CONTRACT
+
+Contract ID: TEST-OPP-001
+Date: 2025-09-15
+
+CUSTOMER INFORMATION:
+Name: John Doe
+Email: john.doe@example.com
+Postcode: 12345
+
+CONTRACT TERMS:
+This contract outlines the terms and conditions for the solar installation project.
+
+1. SCOPE OF WORK
+   - Installation of solar panels as specified in the proposal
+   - Connection to the electrical grid
+   - System testing and commissioning
+
+2. PAYMENT TERMS
+   - Payment schedule as agreed upon
+   - Final payment due upon completion and system testing
+
+3. WARRANTY
+   - 25-year warranty on solar panels
+   - 10-year warranty on inverter
+   - 5-year warranty on installation work
+
+4. COMPLETION TIMELINE
+   - Installation to be completed within agreed timeframe
+   - Weather permitting
+
+CUSTOMER SIGNATURE:
+By signing below, the customer agrees to the terms and conditions outlined in this contract.
+
+Customer Signature: _________________________ Date: _________
+
+Company Representative: _____________________ Date: _________
+
+This contract is legally binding and enforceable.

@@ -1,0 +1,5 @@
+pyautogui==0.9.54
+openpyxl==3.1.2
+pywin32>=307
+Pillow==10.0.1
+mouseinfo==0.1.3

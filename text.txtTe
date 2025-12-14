@@ -1,0 +1,20 @@
+Here are they are just also to be sure i added the vells one more time, for the number infilatly it should be number i will put specfci numberr combination
+Custermo Detilas:
+Customer Name: H12 cutomer_name
+Address: H13 cutomer_address
+PostCode: H14 cutomer_postcode
+
+Curretn Electricyt tarrif:
+Single / Day Rate (pence per kWh):H19 2003
+Night Rate (pence per kWh): H20 1003
+No. of Off-Peak Hours: H21 1234
+
+NEW ELECTRICITY TARIFF:
+Day Rate (pence per kWh): H23 4321
+Night Rate (pence per kWh): H24 3635
+
+ELECTRICITY CONSUMPTION:
+Estimated Annual Usage (kWh):H26 
+
+EXPORT TARIFF:
+Export Tariff Rate (pence per kWh):H30 

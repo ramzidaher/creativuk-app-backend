@@ -1,0 +1,43 @@
+# Dockerfile for Excel COM Automation
+# This extends the existing backend with Excel automation capabilities
+
+FROM node:18-alpine
+
+# Install system dependencies for Excel automation
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    wine \
+    winetricks \
+    && rm -rf /var/cache/apk/*
+
+# Set up Wine for Windows applications
+ENV WINEARCH=win64
+ENV WINEPREFIX=/root/.wine64
+ENV DISPLAY=:99
+
+# Install Python packages for Excel automation
+RUN pip3 install --no-cache-dir \
+    pywin32>=306 \
+    openpyxl>=3.1.0 \
+    xlwings>=0.30.0
+
+# Install Excel through Wine (if needed)
+# Note: This is a complex setup and may not work in all Docker environments
+# Alternative: Use a Windows-based Docker image or host-based automation
+
+# Copy the application
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build
+
+# Expose port
+EXPOSE 3000
+
+# Start the application
+CMD ["npm", "run", "start:prod"]
+
+

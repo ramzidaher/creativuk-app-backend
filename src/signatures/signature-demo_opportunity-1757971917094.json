@@ -1,0 +1,10 @@
+{
+  "opportunityId": "demo_opportunity",
+  "signatureData": "data:image/svg+xml;base64,CiAgICAgICAgICA8c3ZnIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogICAgICAgICAgICA8cGF0aCBkPSJNOTUzLDg4IEw5NTksODggTDEwMDQsMTAxIEwxMTQzLDEzMCBMMTI5NSwxNjIgTDEzODEsMTgwIEwxMzgxLDE4MSBMMTM3MCwxNzggTDEzMzQsMTY2IEwxMzI1LDE2NSBMMTMyMywxNjUgTDEzMjcsMTY1IEwxMzM0LDE2NSBMMTMzOSwxNjYgTDEzNDYsMTY2IEwxMzQ1LDE2NSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIi8+CiAgICAgICAgICA8L3N2Zz4KICAgICAgICA=",
+  "metadata": {
+    "signedAt": "2025-09-15T21:31:56.887Z",
+    "signedBy": "Demo Customer"
+  },
+  "createdAt": "2025-09-15T21:31:57.094Z",
+  "fileName": "signature-demo_opportunity-1757971917094.json"
+}

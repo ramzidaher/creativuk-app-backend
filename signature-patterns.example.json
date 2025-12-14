@@ -1,0 +1,130 @@
+{
+  "off-peak": [
+    {
+      "name": "signature_page_6",
+      "pattern": "signature",
+      "options": {
+        "fuzzy": true,
+        "offsetX": 0.3,
+        "offsetY": -0.02,
+        "fieldWidth": 0.25,
+        "fieldHeight": 0.05,
+        "pageRange": [6, 6]
+      }
+    },
+    {
+      "name": "signature_page_19",
+      "pattern": "signature",
+      "options": {
+        "fuzzy": true,
+        "offsetX": 0.3,
+        "offsetY": -0.02,
+        "fieldWidth": 0.25,
+        "fieldHeight": 0.05,
+        "pageRange": [19, 19]
+      }
+    },
+    {
+      "name": "signature_page_21_1",
+      "pattern": "signature",
+      "options": {
+        "fuzzy": true,
+        "offsetX": 0.2,
+        "offsetY": -0.02,
+        "fieldWidth": 0.22,
+        "fieldHeight": 0.05,
+        "pageRange": [21, 21]
+      }
+    },
+    {
+      "name": "signature_page_21_2",
+      "pattern": "date",
+      "options": {
+        "fuzzy": true,
+        "offsetX": 0.45,
+        "offsetY": -0.02,
+        "fieldWidth": 0.26,
+        "fieldHeight": 0.05,
+        "pageRange": [21, 21]
+      }
+    },
+    {
+      "name": "signature_page_23",
+      "pattern": "signature",
+      "options": {
+        "fuzzy": true,
+        "offsetX": 0.1,
+        "offsetY": -0.02,
+        "fieldWidth": 0.33,
+        "fieldHeight": 0.05,
+        "pageRange": [23, 23]
+      }
+    }
+  ],
+  "flux": [
+    {
+      "name": "signature_page_6",
+      "pattern": "signature",
+      "options": {
+        "fuzzy": true,
+        "offsetX": 0.3,
+        "offsetY": -0.02,
+        "fieldWidth": 0.24,
+        "fieldHeight": 0.05,
+        "pageRange": [6, 6]
+      }
+    },
+    {
+      "name": "signature_page_19",
+      "pattern": "signature",
+      "options": {
+        "fuzzy": true,
+        "offsetX": 0.3,
+        "offsetY": -0.02,
+        "fieldWidth": 0.46,
+        "fieldHeight": 0.03,
+        "pageRange": [19, 19]
+      }
+    },
+    {
+      "name": "signature_page_21_1",
+      "pattern": "signature",
+      "options": {
+        "fuzzy": true,
+        "offsetX": 0.2,
+        "offsetY": -0.02,
+        "fieldWidth": 0.22,
+        "fieldHeight": 0.06,
+        "pageRange": [21, 21]
+      }
+    },
+    {
+      "name": "signature_page_21_2",
+      "pattern": "date",
+      "options": {
+        "fuzzy": true,
+        "offsetX": 0.45,
+        "offsetY": -0.02,
+        "fieldWidth": 0.26,
+        "fieldHeight": 0.06,
+        "pageRange": [21, 21]
+      }
+    },
+    {
+      "name": "signature_page_23",
+      "pattern": "signature",
+      "options": {
+        "fuzzy": true,
+        "offsetX": 0.1,
+        "offsetY": -0.02,
+        "fieldWidth": 0.31,
+        "fieldHeight": 0.05,
+        "pageRange": [23, 23]
+      }
+    }
+  ]
+}
+
+
+
+

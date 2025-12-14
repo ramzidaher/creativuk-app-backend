@@ -1,0 +1,395 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "windows"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String                @id @default(uuid())
+  
+  // New authentication fields
+  username            String                @unique
+  email               String                @unique
+  password            String                // Hashed password
+  role                UserRole              @default(SURVEYOR)
+  status              UserStatus            @default(ACTIVE)
+  isEmailVerified     Boolean               @default(false)
+  emailVerificationToken String?
+  passwordResetToken  String?
+  passwordResetExpires DateTime?
+  
+  // Legacy GHL fields (for backward compatibility)
+  name                String?
+  ghlAccessToken      String?
+  ghlRefreshToken     String?
+  ghlUserId           String?               @unique
+  ghlUserName         String?               // GHL user display name
+  ghlTeamId           String?               // Team ID for appointment filtering
+  tokenExpiresAt      DateTime?
+  
+  // Surveyor area configuration
+  surveyorAreas       String[]              @default([])  // Array of postcode areas (e.g., ['GU', 'RG', 'SO'])
+  surveyorLocation    String?               // Surveyor's base location/postcode
+  maxTravelTime       String?               // Maximum travel time (e.g., '9:30am to 6:30pm')
+  
+  // Timestamps
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  lastLoginAt         DateTime?
+  
+  // Relations
+  appointments        Appointment[]
+  opportunityProgress OpportunityProgress[]
+  surveys            Survey[]
+  autoSaves          AutoSave[]
+  calculatorProgress CalculatorProgress[]
+  opportunityOutcomes OpportunityOutcome[]
+  
+  // Audit trail
+  createdSurveys     Survey[]              @relation("SurveyCreator")
+  updatedSurveys     Survey[]              @relation("SurveyUpdater")
+}
+
+model Appointment {
+  id               String            @id @default(uuid())
+  scheduledAt      DateTime
+  customerName     String
+  customerPhone    String
+  customerEmail    String?
+  address          String
+  status           AppointmentStatus
+  ghlAppointmentId String?
+  userId           String
+  notes            String?
+  sourceChannel    SourceChannel
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  user             User              @relation(fields: [userId], references: [id])
+}
+
+model OpportunityProgress {
+  id               String            @id @default(uuid())
+  ghlOpportunityId String            @unique
+  userId           String
+  currentStep      Int               @default(1)
+  totalSteps       Int               @default(5)
+  status           OpportunityStatus @default(IN_PROGRESS)
+  startedAt        DateTime          @default(now())
+  lastActivityAt   DateTime          @default(now())
+  completedAt      DateTime?
+  stepData         Json?
+  // Contact location information
+  contactAddress   String?
+  contactPostcode  String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  user             User              @relation(fields: [userId], references: [id])
+  steps            OpportunityStep[]
+}
+
+model OpportunityStep {
+  id                    String              @id @default(uuid())
+  opportunityProgressId String
+  stepNumber            Int
+  stepType              StepType
+  status                StepStatus          @default(PENDING)
+  data                  Json?
+  startedAt             DateTime?
+  completedAt           DateTime?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  opportunityProgress   OpportunityProgress @relation(fields: [opportunityProgressId], references: [id], onDelete: Cascade)
+
+  @@unique([opportunityProgressId, stepNumber])
+}
+
+model OpenSolarProject {
+  id                    String    @id @default(uuid())
+  opportunityId         String    @unique
+  opensolarProjectId    String
+  projectName           String
+  address               String?
+  systems               Json      // Array of OpenSolarSystem
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum SourceChannel {
+  MANUAL
+  AI
+  OTHER
+}
+
+enum OpportunityStatus {
+  IN_PROGRESS
+  COMPLETED
+  PAUSED
+  CANCELLED
+}
+
+enum StepType {
+  INITIAL_CONTACT
+  SURVEY_SCHEDULING
+  SITE_SURVEY
+  OPEN_SOLAR
+  CALCULATOR
+  SOLAR_PROJECTION
+  PROPOSAL_GENERATION
+  CONTRACT_SIGNING
+  INSTALLATION_SCHEDULING
+  INSTALLATION_BOOKING
+  FOLLOW_UP
+  EMAIL_CONFIRMATION
+  PAYMENT
+  PRICING
+  WELCOME_EMAIL
+  FINISH_APPOINTMENT
+}
+
+enum StepStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+// Survey model for suitability assessment
+model Survey {
+  id                String   @id @default(uuid())
+  ghlOpportunityId  String   @unique // Links to GHL opportunity
+  ghlUserId         String?
+  user              User?    @relation(fields: [ghlUserId], references: [ghlUserId])
+  
+  // Survey data stored as JSON for flexibility
+  page1             Json?    // SurveyPage1Dto
+  page2             Json?    // SurveyPage2Dto
+  page3             Json?    // SurveyPage3Dto
+  page4             Json?    // SurveyPage4Dto
+  page5             Json?    // SurveyPage5Dto
+  page6             Json?    // SurveyPage6Dto
+  page7             Json?    // SurveyPage7Dto
+  page8             Json?    // SurveyPage8Dto
+  
+  // Survey metadata
+  status            SurveyStatus @default(DRAFT)
+  eligibilityScore  Int?
+  rejectionReason   String?
+  
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  submittedAt       DateTime?
+  approvedAt        DateTime?
+  rejectedAt        DateTime?
+  
+  // Soft delete
+  deletedAt         DateTime?
+  isDeleted         Boolean  @default(false)
+  
+  // Audit trail
+  createdBy         String
+  createdByUser     User     @relation("SurveyCreator", fields: [createdBy], references: [id])
+  updatedBy         String?
+  updatedByUser     User?    @relation("SurveyUpdater", fields: [updatedBy], references: [id])
+  
+  // Relations
+  images            SurveyImage[]
+}
+
+// Survey images model for storing images locally
+model SurveyImage {
+  id                String   @id @default(uuid())
+  surveyId          String
+  survey            Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  
+  // Image metadata
+  fieldName         String   // e.g., 'energyBill', 'frontDoor', etc.
+  fileName          String
+  originalName      String
+  mimeType          String
+  fileSize          Int
+  filePath          String   // Local file path
+  
+  // Image data (base64 encoded for easy access)
+  base64Data        String?  // Optional base64 data for quick access
+  
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Indexes
+  @@index([surveyId])
+  @@index([fieldName])
+}
+
+// Signature model for contract signing
+model Signature {
+  id              String   @id @default(uuid())
+  opportunityId   String
+  signatureData   String   // Base64 encoded signature image
+  signedAt        DateTime
+  signedBy        String?  // User who signed
+  ipAddress       String?  // IP address of signer
+  userAgent       String?  // User agent of signer
+  filePath        String?  // Path to signature file
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([opportunityId])
+}
+
+enum SurveyStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum UserRole {
+  ADMIN
+  SURVEYOR
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum OpportunityOutcomeType {
+  WON
+  LOST
+  ABANDONED
+  IN_PROGRESS
+}
+
+// Win/Loss tracking model for opportunities
+model OpportunityOutcome {
+  id                    String              @id @default(uuid())
+  ghlOpportunityId      String              @unique
+  userId                String
+  outcome               OpportunityOutcomeType
+  value                 Float?              // Deal value in dollars
+  duration              Int?                // Days from start to outcome
+  stageAtOutcome        String?             // GHL stage when outcome occurred
+  notes                 String?             // Additional notes about the outcome
+  ghlUpdatedAt          DateTime?           // When GHL was last updated
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  user                  User                @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([outcome])
+  @@index([createdAt])
+}
+
+model AutoSave {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Opportunity reference
+  opportunityId     String   // GHL Opportunity ID
+  
+  // Auto-saved data stored as JSON
+  data              Json     @default("{}")
+  
+  // Timestamps
+  lastSavedAt       DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
+  isDeleted         Boolean  @default(false)
+  
+  // Indexes
+  @@unique([userId, opportunityId, isDeleted])
+  @@index([userId])
+  @@index([opportunityId])
+  @@index([lastSavedAt])
+}
+
+model CalculatorProgress {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Opportunity reference
+  opportunityId     String   // GHL Opportunity ID
+  calculatorType    String   // 'off-peak', 'flux', 'epvs'
+  
+  // Calculator progress data stored as JSON
+  data              Json     @default("{}")
+  
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Indexes
+  @@unique([userId, opportunityId, calculatorType])
+  @@index([userId])
+  @@index([opportunityId])
+  @@index([calculatorType])
+  @@index([updatedAt])
+}
+
+model SystemSettings {
+  id                String   @id @default(uuid())
+  key               String   @unique
+  value             String
+  description       String?
+  category          String   @default("general")
+  isPublic          Boolean  @default(false)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([key])
+  @@index([category])
+}
+
+// DocuSeal submission tracking for signed documents
+model DocuSealSubmission {
+  id                String   @id @default(uuid())
+  opportunityId     String   // GHL Opportunity ID
+  documentType      DocuSealDocumentType // contract, disclaimer, booking_confirmation
+  templateId        String   // DocuSeal template ID
+  submissionId      String   // DocuSeal submission ID (used to download signed PDFs)
+  signingUrl        String?  // URL for customer to sign
+  status            String   @default("pending") // pending, completed, declined
+  signedDocumentUrl String?  // URL to download signed document (from DocuSeal API)
+  
+  // Customer info at time of creation
+  customerName      String?
+  customerEmail     String?
+  
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  completedAt       DateTime? // When document was signed
+  
+  // Indexes for quick lookup
+  @@unique([opportunityId, documentType]) // One submission per document type per opportunity
+  @@index([opportunityId])
+  @@index([submissionId])
+  @@index([documentType])
+  @@index([status])
+}
+
+enum DocuSealDocumentType {
+  CONTRACT
+  DISCLAIMER
+  BOOKING_CONFIRMATION
+}

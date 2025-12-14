@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "ghlTeamId" TEXT,
+ALTER COLUMN "ghlAccessToken" DROP NOT NULL,
+ALTER COLUMN "ghlRefreshToken" DROP NOT NULL,
+ALTER COLUMN "ghlUserId" DROP NOT NULL;

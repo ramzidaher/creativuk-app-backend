@@ -1,0 +1,8 @@
+Defaulting to user installation because normal site-packages is not writeable
+Collecting xlwings
+  Downloading xlwings-0.33.15-cp313-cp313-win_amd64.whl.metadata (6.5 kB)
+Requirement already satisfied: pywin32>=224 in c:\users\ramzi\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local-packages\python313\site-packages (from xlwings) (311)
+Downloading xlwings-0.33.15-cp313-cp313-win_amd64.whl (1.6 MB)
+   ---------------------------------------- 1.6/1.6 MB 9.5 MB/s  0:00:00
+Installing collected packages: xlwings
+Successfully installed xlwings-0.33.15

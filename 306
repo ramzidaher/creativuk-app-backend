@@ -1,0 +1,7 @@
+Defaulting to user installation because normal site-packages is not writeable
+Collecting pywin32
+  Downloading pywin32-311-cp313-cp313-win_amd64.whl.metadata (10 kB)
+Downloading pywin32-311-cp313-cp313-win_amd64.whl (9.5 MB)
+   ---------------------------------------- 9.5/9.5 MB 6.5 MB/s  0:00:01
+Installing collected packages: pywin32
+Successfully installed pywin32-311

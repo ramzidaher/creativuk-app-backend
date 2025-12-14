@@ -1,0 +1,186 @@
+[
+  {
+    "name": "Basic_Solar_Only",
+    "description": "Standard solar installation without battery",
+    "system_design": {
+      "Solar": true,
+      "Solar_Hybrid_Inverter": false,
+      "Battery_Inverter": false,
+      "Self_Consumption_Battery": false,
+      "Overnight_Charging_Battery": false,
+      "No_Battery": true
+    },
+    "tariff_type": "SingleRate",
+    "know_usage": false,
+    "export_tariff": true,
+    "existing_system": false,
+    "warranties": {
+      "battery_warranty": false,
+      "solar_inverter_warranty": false,
+      "battery_inverter_warranty": false
+    },
+    "template_file": "basic_solar_only.xlsm",
+    "priority": 1
+  },
+  {
+    "name": "Solar_Plus_Battery",
+    "description": "Solar with self-consumption battery",
+    "system_design": {
+      "Solar": true,
+      "Solar_Hybrid_Inverter": true,
+      "Battery_Inverter": false,
+      "Self_Consumption_Battery": true,
+      "Overnight_Charging_Battery": false,
+      "No_Battery": false
+    },
+    "tariff_type": "SingleRate",
+    "know_usage": false,
+    "export_tariff": true,
+    "existing_system": false,
+    "warranties": {
+      "battery_warranty": true,
+      "solar_inverter_warranty": true,
+      "battery_inverter_warranty": false
+    },
+    "template_file": "solar_plus_battery.xlsm",
+    "priority": 1
+  },
+  {
+    "name": "Dual_Rate_Overnight_Charging",
+    "description": "Dual rate tariff with overnight charging battery",
+    "system_design": {
+      "Solar": true,
+      "Solar_Hybrid_Inverter": true,
+      "Battery_Inverter": true,
+      "Self_Consumption_Battery": false,
+      "Overnight_Charging_Battery": true,
+      "No_Battery": false
+    },
+    "tariff_type": "DualRate",
+    "know_usage": true,
+    "export_tariff": true,
+    "existing_system": false,
+    "warranties": {
+      "battery_warranty": true,
+      "solar_inverter_warranty": true,
+      "battery_inverter_warranty": true
+    },
+    "template_file": "dual_rate_overnight.xlsm",
+    "priority": 2
+  },
+  {
+    "name": "Existing_System_Upgrade",
+    "description": "Adding battery to existing solar system",
+    "system_design": {
+      "Solar": false,
+      "Solar_Hybrid_Inverter": true,
+      "Battery_Inverter": true,
+      "Self_Consumption_Battery": true,
+      "Overnight_Charging_Battery": false,
+      "No_Battery": false
+    },
+    "tariff_type": "SingleRate",
+    "know_usage": true,
+    "export_tariff": true,
+    "existing_system": true,
+    "warranties": {
+      "battery_warranty": true,
+      "solar_inverter_warranty": false,
+      "battery_inverter_warranty": true
+    },
+    "template_file": "existing_upgrade.xlsm",
+    "priority": 2
+  },
+  {
+    "name": "Battery_Only",
+    "description": "Battery installation without solar",
+    "system_design": {
+      "Solar": false,
+      "Solar_Hybrid_Inverter": false,
+      "Battery_Inverter": true,
+      "Self_Consumption_Battery": true,
+      "Overnight_Charging_Battery": false,
+      "No_Battery": false
+    },
+    "tariff_type": "SingleRate",
+    "know_usage": true,
+    "export_tariff": false,
+    "existing_system": false,
+    "warranties": {
+      "battery_warranty": true,
+      "solar_inverter_warranty": false,
+      "battery_inverter_warranty": true
+    },
+    "template_file": "battery_only.xlsm",
+    "priority": 3
+  },
+  {
+    "name": "Hybrid_System",
+    "description": "Solar with hybrid inverter for future battery",
+    "system_design": {
+      "Solar": true,
+      "Solar_Hybrid_Inverter": true,
+      "Battery_Inverter": false,
+      "Self_Consumption_Battery": false,
+      "Overnight_Charging_Battery": false,
+      "No_Battery": true
+    },
+    "tariff_type": "SingleRate",
+    "know_usage": false,
+    "export_tariff": true,
+    "existing_system": false,
+    "warranties": {
+      "battery_warranty": false,
+      "solar_inverter_warranty": true,
+      "battery_inverter_warranty": false
+    },
+    "template_file": "hybrid_system.xlsm",
+    "priority": 2
+  },
+  {
+    "name": "Premium_System",
+    "description": "Premium system with extended warranties",
+    "system_design": {
+      "Solar": true,
+      "Solar_Hybrid_Inverter": true,
+      "Battery_Inverter": true,
+      "Self_Consumption_Battery": true,
+      "Overnight_Charging_Battery": false,
+      "No_Battery": false
+    },
+    "tariff_type": "SingleRate",
+    "know_usage": true,
+    "export_tariff": true,
+    "existing_system": false,
+    "warranties": {
+      "battery_warranty": true,
+      "solar_inverter_warranty": true,
+      "battery_inverter_warranty": true
+    },
+    "template_file": "premium_system.xlsm",
+    "priority": 3
+  },
+  {
+    "name": "Economy_System",
+    "description": "Budget system without extended warranties",
+    "system_design": {
+      "Solar": true,
+      "Solar_Hybrid_Inverter": false,
+      "Battery_Inverter": false,
+      "Self_Consumption_Battery": false,
+      "Overnight_Charging_Battery": false,
+      "No_Battery": true
+    },
+    "tariff_type": "SingleRate",
+    "know_usage": false,
+    "export_tariff": true,
+    "existing_system": false,
+    "warranties": {
+      "battery_warranty": false,
+      "solar_inverter_warranty": false,
+      "battery_inverter_warranty": false
+    },
+    "template_file": "economy_system.xlsm",
+    "priority": 3
+  }
+]

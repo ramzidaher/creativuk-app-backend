@@ -1,0 +1,22 @@
+{
+  "testSettings": {
+    "opportunityId": "ZXVh7ONnuHGMpIHnpKZM",
+    "calculatorType": "epvs",
+    "testExcelPath": "C:\\Users\\Creativuk\\creativ-solar-app\\apps\\backend\\src\\excel-file-calculator\\epvs-opportunities\\EPVS Calculator Creativ - 06.02-ZXVh7ONnuHGMpIHnpKZM.xlsm",
+    "password": "99",
+    "description": "Update the testExcelPath with the actual path to your Excel file before running the test"
+  },
+  "instructions": {
+    "step1": "Update the testExcelPath in this file with the correct path to your Excel file",
+    "step2": "Run: node test-solar-projection-vba-fix.js",
+    "step3": "Check the output to see if the VBA fix is working correctly",
+    "step4": "If successful, implement the same logic in the PresentationService.extractSolarProjectionData method"
+  },
+  "expectedResults": {
+    "yearlyPlanCost": "Should not be 0 or null",
+    "yearlySavingYear1": "Should not be 0 or null", 
+    "lifetimeProfit": "Should not be 0 or null",
+    "tableRows": "Should have 30 rows of data",
+    "vbaFixApplied": "Should be true in metadata"
+  }
+}

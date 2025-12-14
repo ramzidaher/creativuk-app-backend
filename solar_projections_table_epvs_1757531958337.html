@@ -1,0 +1,425 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Solar Projections Table - epvs</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { 
+            color: #2c3e50; 
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .summary { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px; 
+            margin: 20px 0; 
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .summary-item {
+            text-align: center;
+        }
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .summary-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        th { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 8px; 
+            text-align: center;
+            font-weight: 600;
+        }
+        td { 
+            padding: 10px 8px; 
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        tr:nth-child(even) { 
+            background-color: #f8f9fa; 
+        }
+        tr:hover { 
+            background-color: #e3f2fd; 
+        }
+        .year-column { 
+            font-weight: 600; 
+            color: #2c3e50;
+        }
+        .money-column { 
+            color: #27ae60; 
+            font-weight: 500;
+        }
+        .generation-column { 
+            color: #3498db; 
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Solar Projections - EPVS Calculator</h1>
+        
+        <div class="summary">
+            <div class="summary-item">
+                <div class="summary-value">£22.00</div>
+                <div class="summary-label">Lifetime Profit</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value">£0.00</div>
+                <div class="summary-label">Total Savings</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value">26</div>
+                <div class="summary-label">Payment Term</div>
+            </div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Year</th><th>Generation</th><th>Savings</th><th>Total Benefit</th><th>Payments</th><th>Net Benefit</th><th>Current Bill</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                    <tr>
+                        <td class="year-column">1</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1519.00</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">2</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1625.94</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">3</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1740.40</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">4</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1862.93</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">5</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1994.08</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">6</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£2134.46</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">7</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£2284.73</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">8</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£2445.57</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">9</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£2617.74</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">10</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£2802.03</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">11</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£2999.29</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">12</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£3210.44</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">13</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£3436.46</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">14</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£3678.38</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">15</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£3937.34</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">16</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£4214.53</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">17</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£4511.23</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">18</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£4828.83</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">19</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£5168.77</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">20</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£5532.66</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">21</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£5922.16</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">22</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£6339.07</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">23</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£6785.35</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">24</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£7263.03</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">25</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£1271.88</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£7774.35</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">26</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£8321.67</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">27</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£8907.51</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">28</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£9534.60</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">29</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£10205.84</td>
+                    </tr>
+                
+                    <tr>
+                        <td class="year-column">30</td>
+                        <td class="generation-column">0 kWh</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£0.00</td>
+                        <td class="money-column">£10924.33</td>
+                    </tr>
+                
+            </tbody>
+        </table>
+        
+        <div class="footer">
+            Generated from Solar Projections data - 10/09/2025
+        </div>
+    </div>
+</body>
+</html>

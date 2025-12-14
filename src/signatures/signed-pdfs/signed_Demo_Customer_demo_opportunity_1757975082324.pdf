@@ -1,0 +1,159 @@
+
+%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+  /XObject <<
+    /Sig1 5 0 R
+    /Watermark 6 0 R
+  >>
+  /Font <<
+    /F1 7 0 R
+  >>
+>>
+/Annots [8 0 R]
+>>
+endobj
+
+4 0 obj
+<<
+/Length 200
+>>
+stream
+BT
+/F1 12 Tf
+50 750 Td
+(DIGITALLY SIGNED DOCUMENT) Tj
+0 -20 Td
+(Document: EPVS Calculator - uJyaLIVWcn5I5IKOHqCg.pdf) Tj
+0 -20 Td
+(Signed by: Demo Customer) Tj
+0 -20 Td
+(Signed at: 15/09/2025, 23:24:37) Tj
+0 -40 Td
+(Signature ID: signature_demo_opportunity_1757975077840) Tj
+0 -20 Td
+(Algorithm: SHA-256) Tj
+0 -20 Td
+(Verification Hash: data:image/svg+xml;base64,CiAgIC...) Tj
+0 -20 Td
+(Status: ESIGN ACT COMPLIANT) Tj
+0 -40 Td
+q
+200 0 0 100 50 500 cm
+/Sig1 Do
+Q
+q
+612 0 0 50 0 0 cm
+/Watermark Do
+Q
+ET
+endstream
+endobj
+
+5 0 obj
+<<
+/Type /XObject
+/Subtype /Image
+/Width 200
+/Height 100
+/ColorSpace /DeviceRGB
+/BitsPerComponent 8
+/Length 528
+>>
+stream
+CiAgICAgICAgICA8c3ZnIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogICAgICAgICAgICA8cGF0aCBkPSJNMTMyNywxMDIgTDEzMjMsMTA0IEwxMjc4LDExMSBMMTE5OSwxMjcgTDExNTEsMTM1IEwxMTMzLDEzOCBMMTEyMSwxMzkgTDExMTMsMTM5IEwxMTExLDEzOSBMMTEwNCwxMzEgTDExMDEsMTI3IEwxMDk3LDEyMyBMMTA5NywxMjIgTDEwOTcsMTIxIEwxMDk3LDEyMSBMMTA5NywxMjAgTDExMDIsMTE3IEwxMTE5LDExMSBMMTE0MCwxMDcgTDExNjUsMTAyIEwxMTkzLDEwMSBMMTIwOCw5OSBMMTIxMCw5OSBMMTIxNCwxMDcgTDEyMjIsMTE4IEwxMjI5LDEyOSBMMTIzNywxMzkgTDEyNDUsMTQ4IEwxMjQ3LDE1MCBMMTI0OCwxNTEgTDEyNDksMTUxIEwxMjUyLDE1MSBMMTI1MywxNTMgTDEyODIsMTc3IEwxMjg1LDE3OSBMMTI4NSwxNzkiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgogICAgICAgICAgPC9zdmc+CiAgICAgICAg
+endstream
+endobj
+
+6 0 obj
+<<
+/Type /XObject
+/Subtype /Image
+/Width 612
+/Height 50
+/ColorSpace /DeviceRGB
+/BitsPerComponent 8
+/Length 232
+>>
+stream
+CiAgICAgIFZFUklGSUVEIERJR0lUQUwgU0lHTkFUVVJFCiAgICAgIFNpZ25hdHVyZSBJRDogc2lnbmF0dXJlX2RlbW9fb3Bwb3J0dW5pdHlfMTc1Nzk3NTA3Nzg0MAogICAgICBBbGdvcml0aG06IFNIQS0yNTYKICAgICAgVGltZXN0YW1wOiAyMDI1LTA5LTE1VDIyOjI0OjM3Ljg0MFoKICAgICAgU3RhdHVzOiBFU0lHTiBBQ1QgQ09NUExJQU5UCiAgICAgIEhhc2g6IGRhdGE6aW1hZ2Uvc3ZnK3guLi4KICAgIA==
+endstream
+endobj
+
+7 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+8 0 obj
+<<
+/Type /Annot
+/Subtype /Widget
+/Rect [50 500 250 600]
+/FT /Sig
+/T (Digital Signature)
+/F 4
+/V <<
+  /Type /Sig
+  /Filter /Adobe.PPKLite
+  /SubFilter /adbe.pkcs7.detached
+  /Contents <data:image/svg+xml;base64,CiAgICAgICAgICA8c3ZnIHdpZHRoPSIzMDAiIG>
+  /ByteRange [0 1000 2000 1000]
+  /Reference [<<
+    /Type /SigRef
+    /TransformMethod /DocMDP
+    /TransformParams <<
+      /P 1
+      /V /1.2
+    >>
+  >>]
+  /M (D:20250915T222437+00'00')
+  /Location (Digital Signature)
+  /Reason (Document Authentication)
+  /ContactInfo (Demo Customer)
+>>
+endobj
+
+xref
+0 9
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000254 00000 n 
+0000000514 00000 n 
+0000000680 00000 n 
+0000000850 00000 n 
+0000000920 00000 n 
+trailer
+<<
+/Size 9
+/Root 1 0 R
+>>
+startxref
+1760
+%%EOF
+    

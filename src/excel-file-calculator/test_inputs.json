@@ -1,0 +1,23 @@
+{
+  "customerName": "Test Customer",
+  "address": "123 Test Street",
+  "postcode": "TE1 1ST",
+  "singleDayRate": 0.25,
+  "nightRate": 0.15,
+  "offPeakHours": 8,
+  "newDayRate": 0.20,
+  "newNightRate": 0.12,
+  "estimatedAnnualUsage": 3500,
+  "exportTariffRate": 0.05,
+  "panelManufacturer": "SunPower",
+  "panelModel": "SPR-X22-360",
+  "batteryManufacturer": "Tesla",
+  "batteryModel": "Powerwall 2",
+  "inverterManufacturer": "SMA",
+  "inverterModel": "Sunny Boy 5.0",
+  "batteryInverterManufacturer": "Tesla",
+  "batteryInverterModel": "Powerwall Gateway",
+  "batteryExtendedWarrantyYears": 10,
+  "batteryReplacementCost": 5000,
+  "inverterReplacementCost": 2000
+}

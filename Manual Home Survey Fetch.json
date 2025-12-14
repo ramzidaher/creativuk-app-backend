@@ -1,0 +1,50 @@
+{
+  "opportunity": {
+    "id": "Gn2GtrXHRHobmvFNANoi",
+    "name": "CH64 9TL, Yvonne Pardoe",
+    "monetaryValue": 0,
+    "pipelineId": "FxPA8fVU11VnudThxhFy",
+    "pipelineStageId": "97cbf1b8-31c2-4486-9edc-5a3d5d0c198c",
+    "status": "open",
+    "source": "Facebook Ad - Creativ",
+    "lastStatusChangeAt": "2025-07-04T18:54:00.332Z",
+    "lastStageChangeAt": "2025-07-04T19:23:17.881Z",
+    "createdAt": "2025-07-04T18:54:00.332Z",
+    "updatedAt": "2025-07-16T09:39:36.156Z",
+    "contactId": "mNa17n33eO39ZLyG9Nnx",
+    "isAttribute": true,
+    "internalSource": {
+      "type": "CREATED",
+      "id": "8f5f756f-c5c0-443a-ab60-826cace18434",
+      "apiVersion": "2021-04-15",
+      "channel": "ISTIO_MESH",
+      "source": "WORKFLOW_NEW"
+    },
+    "locationId": "03HhMPsHSZJsAwM77yp6",
+    "lastActionDate": "2025-07-16T09:39:36.138Z",
+    "followers": [],
+    "contact": {
+      "id": "mNa17n33eO39ZLyG9Nnx",
+      "name": "Yvonne Pardoe",
+      "email": "yvonnepardoe@hotmail.co.uk",
+      "phone": "+447530625399",
+      "tags": [
+        "facebook-lp creativ",
+        "new lead",
+        "facebook",
+        "creativ energy",
+        "conversation started",
+        "home-survey-appt",
+        "appt booked",
+        "manual-survey-home",
+        "ai-bot-reschedule-manual",
+        "lead complete",
+        "reschedule-manual",
+        "missed call",
+        "inbound call"
+      ],
+      "followers": []
+    }
+  },
+  "traceId": "1271aae9-2697-4419-b0f4-fb79e2890a16"
+}
