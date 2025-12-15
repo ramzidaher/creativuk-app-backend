@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as express from 'express';
 import { join } from 'path';
 import * as fs from 'fs';
@@ -146,6 +147,36 @@ async function bootstrap() {
     });
   }
   
+  // Swagger API Documentation
+  const config = new DocumentBuilder()
+    .setTitle('CreativUK App Backend API')
+    .setDescription('A comprehensive NestJS backend API for managing solar energy opportunities, workflows, and customer interactions')
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth', // This name here is important for matching up with @ApiBearerAuth() in your controller!
+    )
+    .addTag('auth', 'Authentication endpoints')
+    .addTag('opportunities', 'Opportunity management')
+    .addTag('appointments', 'Appointment booking')
+    .addTag('admin', 'Admin dashboard endpoints')
+    .addTag('integrations', 'Third-party integrations')
+    .build();
+  
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api-docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true, // Keep auth token after page refresh
+    },
+  });
+  
   // Start HTTP server on localhost
   const port = parseInt(process.env.PORT ?? '3000');
   
@@ -153,6 +184,7 @@ async function bootstrap() {
   console.log(`🚀 HTTP Server running on http://localhost:${port}`);
   console.log(`📱 Frontend should connect to: http://localhost:${port}`);
   console.log(`🌐 Server listening on localhost:${port}`);
+  console.log(`📚 API Documentation available at http://localhost:${port}/api-docs`);
   console.log(`🔍 Test with: curl http://localhost:${port}/health`);
 }
 bootstrap();

@@ -10,6 +10,7 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.test
 
 # Build outputs
 dist/
@@ -20,10 +21,8 @@ generated/
 # Logs
 logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
+excel_automation.log
+simple_human_excel_calculator.log
 
 # Runtime data
 pids/
@@ -31,67 +30,34 @@ pids/
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
+# Coverage directory
 coverage/
 *.lcov
-
-# nyc test coverage
-.nyc_output
-
-# Dependency directories
-node_modules/
-jspm_packages/
+.nyc_output/
 
 # TypeScript cache
 *.tsbuildinfo
 
 # Optional npm cache directory
 .npm
-
-# Optional eslint cache
 .eslintcache
 
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
-.env
-.env.test
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-
-# Gatsby files
+# Cache directories
 .cache/
-public
+.parcel-cache/
+.next/
+.nuxt/
 
-# Storybook build outputs
-.out
-.storybook-out
-
-# Temporary folders
-tmp/
-temp/
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
 
 # Editor directories and files
 .vscode/
@@ -109,45 +75,58 @@ temp/
 ehthumbs.db
 Thumbs.db
 
-# Database
+# Database files
 *.db
 *.sqlite
 *.sqlite3
 
-# Prisma
+# Prisma generated
 /generated/prisma
 
-# Excel files and automation
+# Excel files (source Excel files - keep templates if needed)
 *.xlsm
 *.xlsx
 *.xls
+
+# PowerPoint files (exclude large ones over 50MB)
+*.pptx
+# But allow specific template files if needed
+!src/excel-file-calculator/templates/*.pptx
+# Exclude these specific large files
+src/excel-file-calculator/Presentation.pptx
+src/excel-file-calculator/presnetation/Proposal.pptx
+src/excel-file-calculator/epvs-templates/*.pptx
+
+# PDF files (exclude generated, but keep templates)
+*.pdf
+!src/**/*.pdf
+!prisma/**/*.pdf
+
+# Video files
+*.mp4
+
+# Temporary and test files
+temp/
+tmp/
+*.tmp
 temp-*.ps1
 temp-*.js
 temp-*.bat
 *-test-*.ps1
 *-test-*.js
 *-test-*.bat
-temp-complete-calculation-*.ps1
-temp-create-opportunity-*.ps1
-temp-custom-radio-button-*.ps1
-temp-dropdown-*.ps1
-temp-email-*.ps1
-temp-epvs-radio-button-*.ps1
-temp-flux-rates-*.ps1
-temp-get-inputs-*.ps1
-temp-macro-execution-*.ps1
-temp-multiple-radio-button-*.ps1
-temp-payment-*.ps1
-temp-pdf-generation-*.ps1
-temp-pptx-to-mp4-*.ps1
-temp-radio-button-*.ps1
-temp-save-inputs-*.ps1
-temp-save-payment-details-*.ps1
-temp-solar-projection-*.ps1
+test-*.js
+test-*.ps1
+debug-*.js
+check-*.js
+inspect-*.js
+simple-*.js
+find-*.js
+run-*.js
+run-*.bat
 
-# PowerShell scripts
+# PowerShell scripts (but allow ecosystem.config.cjs)
 *.ps1
-!package.json
 !ecosystem.config.cjs
 
 # Python files
@@ -169,145 +148,35 @@ venv.bak/
 *-test-results.json
 *-excel-inputs-results.json
 
-# Generated files
-*.mp4
-*.pptx
-*.pdf
-!src/**/*.pdf
-# Exclude large PowerPoint files (over 50MB)
-src/excel-file-calculator/Presentation.pptx
-src/excel-file-calculator/presnetation/Proposal.pptx
-src/excel-file-calculator/epvs-templates/*.pptx
-
-# Signature metadata
-signature-metadata/
-
-# Uploads (keep structure but ignore content)
-uploads/
-!uploads/.gitkeep
-
-# Excel file calculator outputs
+# Generated output directories (keep source code)
 src/excel-file-calculator/output/
 src/excel-file-calculator/opportunities/
 src/excel-file-calculator/epvs-opportunities/
-
-# Survey reports
-uploads/survey-reports/
-
-# Signed documents
 src/disclaimer/signed/
 src/email_confirmation/signed/
-
-# Solar projections
-src/solar-projection/
-
-# Video generation outputs
 src/video-generation/output/
-
-# RAR files
-*.rar
-*.tar.gz
-
-# Backup files
-*.backup
-*.bak
-*.old
-
-# Test files
-test-*.js
-test-*.ps1
-debug-*.js
-check-*.js
-inspect-*.js
-simple-*.js
-find-*.js
-run-*.js
-run-*.bat
+src/solar-projection/output/
+uploads/
+uploads/survey-reports/
+signature-metadata/
+public/
 
 # Configuration files that might contain secrets
 *.config.js
 !env.config.js
 !webpack.config.js
 !metro.config.js
-
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS specific files
-.DS_Store
-Thumbs.db
-ehthumbs.db
-
-# Log files
-*.log
-logs/
-excel_automation.log
-simple_human_excel_calculator.log
-
-# Temporary files
-temp/
-tmp/
-*.tmp
-
-# Build artifacts
-dist/
-build/
-out/
-
-# Package manager files
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# Environment files
-.env*
-!.env.example
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Cache directories
-.cache/
-.parcel-cache/
-.next/
-.nuxt/
-
-# Coverage reports
-coverage/
-.nyc_output/
-
-# ESLint cache
-.eslintcache
-
-# TypeScript cache
-*.tsbuildinfo
-
-# Optional npm cache
-.npm
-
-# Yarn
-.yarn-integrity
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
+!ecosystem.config.cjs
 
 # PM2
 ecosystem.config.js
-!ecosystem.config.cjs
 
 # Docker
 Dockerfile
 docker-compose*.yml
 .dockerignore
 
-# Documentation that might be generated
+# Documentation (keep important ones)
 *.md
 !README.md
 !CHANGELOG.md
@@ -323,54 +192,14 @@ docker-compose*.yml
 *.crt
 *.csr
 
+# Backup files
+*.backup
+*.bak
+*.old
+
+# RAR files
+*.rar
+*.tar.gz
+
 # Mobile app files (if not needed in backend)
 ../mobile/
-
-# Additional patterns for this specific project
-apps/backend/temp-*
-apps/backend/*-test-*
-apps/backend/test-*
-apps/backend/debug-*
-apps/backend/check-*
-apps/backend/inspect-*
-apps/backend/simple-*
-apps/backend/find-*
-apps/backend/run-*
-apps/backend/*.ps1
-apps/backend/*.py
-apps/backend/*.bat
-apps/backend/*.log
-apps/backend/*.rar
-apps/backend/*.tar.gz
-apps/backend/signature-metadata/
-apps/backend/uploads/
-apps/backend/src/excel-file-calculator/output/
-apps/backend/src/excel-file-calculator/opportunities/
-apps/backend/src/excel-file-calculator/epvs-opportunities/
-apps/backend/src/disclaimer/signed/
-apps/backend/src/email_confirmation/signed/
-apps/backend/src/solar-projection/
-apps/backend/src/video-generation/output/
-apps/backend/temp/
-apps/backend/logs/
-apps/backend/*.backup
-apps/backend/*.bak
-apps/backend/*.old
-apps/backend/*.config.js
-!apps/backend/env.config.js
-!apps/backend/webpack.config.js
-!apps/backend/metro.config.js
-apps/backend/ecosystem.config.js
-apps/backend/*.postman_collection.json
-apps/backend/*.pem
-apps/backend/*.key
-apps/backend/*.crt
-apps/backend/*.csr
-apps/backend/Dockerfile
-apps/backend/docker-compose*.yml
-apps/backend/.dockerignore
-apps/backend/*.md
-!apps/backend/README.md
-!apps/backend/CHANGELOG.md
-!apps/backend/LICENSE.md
-!apps/backend/CONTRIBUTING.md
