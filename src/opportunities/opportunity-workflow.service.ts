@@ -94,6 +94,14 @@ export class OpportunityWorkflowService {
     },
     {
       stepNumber: 9,
+      stepType: StepType.EXPRESS_CONSENT,
+      title: 'Express Consent',
+      description: 'Sign the express consent form for work to commence',
+      required: true,
+      estimatedDuration: 10
+    },
+    {
+      stepNumber: 10,
       stepType: StepType.EMAIL_CONFIRMATION,
       title: 'Email Confirmation',
       description: 'Sign the booking confirmation letter',
@@ -101,7 +109,7 @@ export class OpportunityWorkflowService {
       estimatedDuration: 10
     },
     {
-      stepNumber: 10,
+      stepNumber: 11,
       stepType: StepType.PAYMENT,
       title: 'Payment',
       description: 'Process payment for the installation',
@@ -109,7 +117,7 @@ export class OpportunityWorkflowService {
       estimatedDuration: 10
     },
     {
-      stepNumber: 11,
+      stepNumber: 12,
       stepType: StepType.INSTALLATION_BOOKING,
       title: 'Book Installation',
       description: 'Schedule your solar installation appointment',
@@ -117,7 +125,7 @@ export class OpportunityWorkflowService {
       estimatedDuration: 15
     },
     {
-      stepNumber: 12,
+      stepNumber: 13,
       stepType: StepType.WELCOME_EMAIL,
       title: 'Send Welcome Email',
       description: 'Send welcome email to customer with installation details',

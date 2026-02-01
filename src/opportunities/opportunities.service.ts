@@ -4,6 +4,7 @@ import { GoHighLevelService } from '../integrations/gohighlevel.service';
 import { ConfigService } from '@nestjs/config';
 import { UserRole } from '../auth/dto/auth.dto';
 import { DynamicSurveyorService } from './dynamic-surveyor.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class OpportunitiesService {
@@ -14,6 +15,7 @@ export class OpportunitiesService {
     private readonly goHighLevelService: GoHighLevelService,
     private readonly configService: ConfigService,
     private readonly dynamicSurveyorService: DynamicSurveyorService,
+    private readonly prisma: PrismaService,
   ) {}
 
   private getGhlCredentials() {
@@ -1278,9 +1280,8 @@ export class OpportunitiesService {
     opportunities: any[],
     credentials: { accessToken: string; locationId: string }
   ): Promise<any[]> {
-    const enhancedOpportunities: any[] = [];
-
-    for (const opportunity of opportunities) {
+    // Process opportunities in parallel for better performance (especially for admins)
+    const enhancedPromises = opportunities.map(async (opportunity) => {
       const contactId = opportunity.contactId || opportunity.contact?.id;
       
       let appointmentInfo: any = {
@@ -1295,49 +1296,45 @@ export class OpportunitiesService {
       if (contactId) {
         try {
           // ONLY USE CONTACT NOTES: Skip GHL API appointments to avoid "Multiple" classification
-          this.logger.log(`🔍 Checking contact notes for ${opportunity.name}...`);
-          
           try {
             const contactNotes = await this.goHighLevelService.getContactNotes(
               credentials.accessToken,
               contactId
             );
               
-              const appointmentFromNotes = this.extractAppointmentDetailsFromNotes(contactNotes);
+            const appointmentFromNotes = this.extractAppointmentDetailsFromNotes(contactNotes);
               
-              if (appointmentFromNotes) {
-                this.logger.log(`✅ Found appointment details in contact notes for ${opportunity.name}`);
-                appointmentInfo = {
-                  hasAppointment: true,
-                  appointmentCount: 1,
-                  appointmentDetails: appointmentFromNotes,
-                  classification: 'CONFIRMED',
-                  confidence: 'MEDIUM',
-                  reason: 'Appointment found in contact notes',
-                  appointmentSource: 'contact_notes'
-                };
-              } else {
-                this.logger.log(`❌ No appointment details found in contact notes for ${opportunity.name}`);
-                appointmentInfo = {
-                  hasAppointment: false,
-                  appointmentCount: 0,
-                  appointmentDetails: null,
-                  classification: 'NO_APPOINTMENT',
-                  confidence: 'LOW',
-                  reason: 'No appointment details found in contact notes'
-                };
-              }
-            } catch (notesError) {
-              this.logger.warn(`❌ Failed to get contact notes for ${opportunity.name}: ${notesError.message}`);
+            if (appointmentFromNotes) {
+              appointmentInfo = {
+                hasAppointment: true,
+                appointmentCount: 1,
+                appointmentDetails: appointmentFromNotes,
+                classification: 'CONFIRMED',
+                confidence: 'MEDIUM',
+                reason: 'Appointment found in contact notes',
+                appointmentSource: 'contact_notes'
+              };
+            } else {
               appointmentInfo = {
                 hasAppointment: false,
                 appointmentCount: 0,
                 appointmentDetails: null,
                 classification: 'NO_APPOINTMENT',
                 confidence: 'LOW',
-                reason: 'Failed to get contact notes'
+                reason: 'No appointment details found in contact notes'
               };
             }
+          } catch (notesError) {
+            this.logger.warn(`❌ Failed to get contact notes for ${opportunity.name}: ${notesError.message}`);
+            appointmentInfo = {
+              hasAppointment: false,
+              appointmentCount: 0,
+              appointmentDetails: null,
+              classification: 'NO_APPOINTMENT',
+              confidence: 'LOW',
+              reason: 'Failed to get contact notes'
+            };
+          }
 
         } catch (error) {
           this.logger.warn(`❌ Failed to get appointments for opportunity ${opportunity.id}: ${error.message}`);
@@ -1352,15 +1349,16 @@ export class OpportunitiesService {
         }
       }
 
-      enhancedOpportunities.push({
+      return {
         ...opportunity,
         ...appointmentInfo,
         // Add type field based on pipeline stage
         type: opportunity.pipelineStageId === '8904bbe1-53a3-468e-94e4-f13cb04a4947' ? 'ai' : 'manual'
-      });
-    }
+      };
+    });
 
-    return enhancedOpportunities;
+    // Wait for all parallel requests to complete
+    return Promise.all(enhancedPromises);
   }
 
   private quickAppointmentAnalysis(appointments: any[], opportunity: any) {
@@ -1998,7 +1996,8 @@ export class OpportunitiesService {
   /**
    * UNIFIED APPROACH: Get opportunities with "confirmed" or "appt confirmed" tags from specific stages
    * This method:
-   * 1. Gets opportunities from AI Bot and Manual Home Survey Booked stages
+   * 1. Gets opportunities from all 4 stages: AI Bot Home Survey Booked, Manual Home Survey Booked, 
+   *    Manual Online Quotes, and AI Bot Online Quotes
    * 2. Filters opportunities that have the "confirmed" or "appt confirmed" tag
    * Returns only confirmed opportunities from these specific stages
    */
@@ -2018,17 +2017,35 @@ export class OpportunitiesService {
 
       this.logger.log(`🎯 CONFIRMED OPPORTUNITIES FETCH: Starting for user: ${user.name} (${user.role})`);
 
-      // Get opportunities from specific stages: AI Bot and Manual Home Survey Booked stages
+      // Get opportunities from all 4 stages: AI Bot and Manual Home Survey Booked stages, plus Online Quotes stages
       const aiStageId = '8904bbe1-53a3-468e-94e4-f13cb04a4947'; // (AI Bot) Home Survey Booked
       const manualStageId = '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c'; // (Manual) Home Survey Booked
+      const additionalStageId = '69b91b0e-b23d-4d7e-9a15-6bcbf0d05b9b'; // Manual Online Quotes
+      const additionalStageId2 = '1bb0bbae-97ca-42ca-b10e-f32097fb189d'; // AI Bot Online Quotes
+      
+      this.logger.log(`📋 Fetching opportunities from 4 stages:`);
+      this.logger.log(`   1. AI Bot Home Survey Booked: ${aiStageId}`);
+      this.logger.log(`   2. Manual Home Survey Booked: ${manualStageId}`);
+      this.logger.log(`   3. Manual Online Quotes: ${additionalStageId}`);
+      this.logger.log(`   4. AI Bot Online Quotes: ${additionalStageId2}`);
       
       const allOpportunities = await this.goHighLevelService.getOpportunitiesByStages(
         credentials.accessToken,
         credentials.locationId,
-        [aiStageId, manualStageId]
+        [aiStageId, manualStageId, additionalStageId, additionalStageId2]
       );
 
-      this.logger.log(`📊 Found ${allOpportunities.length} opportunities in AI and Manual Home Survey Booked stages`);
+      // Log breakdown by stage BEFORE any filtering
+      const aiBeforeFilter = allOpportunities.filter(opp => opp.pipelineStageId === aiStageId);
+      const manualBeforeFilter = allOpportunities.filter(opp => opp.pipelineStageId === manualStageId);
+      const onlineQuotesManualBeforeFilter = allOpportunities.filter(opp => opp.pipelineStageId === additionalStageId);
+      const onlineQuotesAiBeforeFilter = allOpportunities.filter(opp => opp.pipelineStageId === additionalStageId2);
+      
+      this.logger.log(`📊 Found ${allOpportunities.length} total opportunities from all 4 stages:`);
+      this.logger.log(`   - AI Bot Home Survey Booked: ${aiBeforeFilter.length} opportunities`);
+      this.logger.log(`   - Manual Home Survey Booked: ${manualBeforeFilter.length} opportunities`);
+      this.logger.log(`   - Manual Online Quotes: ${onlineQuotesManualBeforeFilter.length} opportunities`);
+      this.logger.log(`   - AI Bot Online Quotes: ${onlineQuotesAiBeforeFilter.length} opportunities`);
 
       // Filter opportunities based on user role
       const filteredOpportunities = await this.filterOpportunitiesByUserRoleAndAppointments(
@@ -2037,14 +2054,44 @@ export class OpportunitiesService {
         credentials
       );
 
-      this.logger.log(`👤 Filtered to ${filteredOpportunities.length} opportunities for user ${user.name}`);
+      // Log breakdown by stage AFTER user role filtering
+      const aiAfterUserFilter = filteredOpportunities.filter(opp => opp.pipelineStageId === aiStageId);
+      const manualAfterUserFilter = filteredOpportunities.filter(opp => opp.pipelineStageId === manualStageId);
+      const onlineQuotesManualAfterUserFilter = filteredOpportunities.filter(opp => opp.pipelineStageId === additionalStageId);
+      const onlineQuotesAiAfterUserFilter = filteredOpportunities.filter(opp => opp.pipelineStageId === additionalStageId2);
+      
+      this.logger.log(`👤 After user role filtering: ${filteredOpportunities.length} opportunities for user ${user.name}`);
+      this.logger.log(`   - AI Bot Home Survey Booked: ${aiAfterUserFilter.length} opportunities`);
+      this.logger.log(`   - Manual Home Survey Booked: ${manualAfterUserFilter.length} opportunities`);
+      this.logger.log(`   - Manual Online Quotes: ${onlineQuotesManualAfterUserFilter.length} opportunities`);
+      this.logger.log(`   - AI Bot Online Quotes: ${onlineQuotesAiAfterUserFilter.length} opportunities`);
 
       // TAG-BASED APPROACH: Filter opportunities that have "confirmed" or "appt confirmed" tags
-      const confirmedOpportunities = filteredOpportunities.filter(opp => 
-        this.checkForConfirmedTag(opp)
-      );
+      this.logger.log(`🏷️  Filtering opportunities by "confirmed" or "appt confirmed" tags...`);
+      const confirmedOpportunities = filteredOpportunities.filter(opp => {
+        const hasTag = this.checkForConfirmedTag(opp);
+        if (!hasTag && (opp.pipelineStageId === additionalStageId || opp.pipelineStageId === additionalStageId2)) {
+          // Log Online Quotes opportunities that don't have tags for debugging
+          const tags = opp.contact?.tags || opp.tags || opp.tag || [];
+          const tagNames = Array.isArray(tags) 
+            ? tags.map(tag => typeof tag === 'string' ? tag : tag.name || tag.title || '').filter(Boolean)
+            : [tags].filter(Boolean);
+          this.logger.log(`⚠️  Online Quotes opportunity "${opp.name}" missing confirmed tag. Tags: [${tagNames.join(', ')}]`);
+        }
+        return hasTag;
+      });
 
-      this.logger.log(`✅ Found ${confirmedOpportunities.length} opportunities with "confirmed" or "appt confirmed" tags`);
+      // Log breakdown by stage AFTER tag filtering
+      const aiAfterTagFilter = confirmedOpportunities.filter(opp => opp.pipelineStageId === aiStageId);
+      const manualAfterTagFilter = confirmedOpportunities.filter(opp => opp.pipelineStageId === manualStageId);
+      const onlineQuotesManualAfterTagFilter = confirmedOpportunities.filter(opp => opp.pipelineStageId === additionalStageId);
+      const onlineQuotesAiAfterTagFilter = confirmedOpportunities.filter(opp => opp.pipelineStageId === additionalStageId2);
+      
+      this.logger.log(`✅ After tag filtering: ${confirmedOpportunities.length} opportunities with "confirmed" or "appt confirmed" tags`);
+      this.logger.log(`   - AI Bot Home Survey Booked: ${aiAfterTagFilter.length} opportunities`);
+      this.logger.log(`   - Manual Home Survey Booked: ${manualAfterTagFilter.length} opportunities`);
+      this.logger.log(`   - Manual Online Quotes: ${onlineQuotesManualAfterTagFilter.length} opportunities`);
+      this.logger.log(`   - AI Bot Online Quotes: ${onlineQuotesAiAfterTagFilter.length} opportunities`);
 
       // ENHANCE OPPORTUNITIES WITH APPOINTMENT INFO
       const opportunitiesWithAppointmentInfo = await this.enhanceOpportunitiesWithAppointmentInfo(
@@ -2052,13 +2099,17 @@ export class OpportunitiesService {
         credentials
       );
 
-      // Log breakdown by stage
+      // Log breakdown by stage AFTER enhancement
       const aiOpportunities = opportunitiesWithAppointmentInfo.filter(opp => opp.pipelineStageId === aiStageId);
       const manualOpportunities = opportunitiesWithAppointmentInfo.filter(opp => opp.pipelineStageId === manualStageId);
+      const additionalOpportunities = opportunitiesWithAppointmentInfo.filter(opp => opp.pipelineStageId === additionalStageId);
+      const additionalOpportunities2 = opportunitiesWithAppointmentInfo.filter(opp => opp.pipelineStageId === additionalStageId2);
       
-      this.logger.log(`📅 Enhanced ${opportunitiesWithAppointmentInfo.length} confirmed opportunities with appointment info`);
-      this.logger.log(`   - AI Bot stage: ${aiOpportunities.length} opportunities`);
-      this.logger.log(`   - Manual stage: ${manualOpportunities.length} opportunities`);
+      this.logger.log(`📅 Final result: ${opportunitiesWithAppointmentInfo.length} confirmed opportunities with appointment info`);
+      this.logger.log(`   - AI Bot Home Survey Booked: ${aiOpportunities.length} opportunities`);
+      this.logger.log(`   - Manual Home Survey Booked: ${manualOpportunities.length} opportunities`);
+      this.logger.log(`   - Manual Online Quotes: ${additionalOpportunities.length} opportunities`);
+      this.logger.log(`   - AI Bot Online Quotes: ${additionalOpportunities2.length} opportunities`);
 
       return {
         opportunities: opportunitiesWithAppointmentInfo,
@@ -2068,7 +2119,13 @@ export class OpportunitiesService {
           name: user.name,
           role: user.role,
         },
-        method: 'confirmed-tag-with-appointment-extraction'
+        method: 'confirmed-tag-with-appointment-extraction',
+        breakdown: {
+          aiHomeSurveyBooked: aiOpportunities.length,
+          manualHomeSurveyBooked: manualOpportunities.length,
+          manualOnlineQuotes: additionalOpportunities.length,
+          aiOnlineQuotes: additionalOpportunities2.length,
+        }
       };
     } catch (error) {
       this.logger.error(`Error in getOpportunitiesWithAppointmentsUnified: ${error.message}`);
@@ -2324,10 +2381,18 @@ export class OpportunitiesService {
     const tags = opportunity.contact?.tags || opportunity.tags || opportunity.tag || [];
     
     if (Array.isArray(tags)) {
+      // Log all tags for debugging
+      const tagNames = tags.map(tag => typeof tag === 'string' ? tag : tag.name || tag.title || '').filter(Boolean);
+      this.logger.log(`🔍 Checking tags for "${opportunity.name}": [${tagNames.join(', ')}]`);
+      
       const hasConfirmedTag = tags.some(tag => {
         const tagText = typeof tag === 'string' ? tag : tag.name || tag.title || '';
-        const lowerTagText = tagText.toLowerCase();
-        const isConfirmedTag = lowerTagText === 'confirmed' || lowerTagText === 'appt confirmed';
+        const lowerTagText = tagText.toLowerCase().trim();
+        // Check for exact matches or contains "confirmed" or "appt confirmed"
+        const isConfirmedTag = lowerTagText === 'confirmed' || 
+                              lowerTagText === 'appt confirmed' ||
+                              lowerTagText.includes('appt confirmed') ||
+                              (lowerTagText.includes('confirmed') && lowerTagText.includes('appt'));
         
         if (isConfirmedTag) {
           this.logger.log(`✅ Found confirmed tag: "${tagText}" for opportunity: ${opportunity.name}`);
@@ -2336,20 +2401,33 @@ export class OpportunitiesService {
         return isConfirmedTag;
       });
       
-      return hasConfirmedTag;
-    }
-
-    if (typeof tags === 'string') {
-      const lowerTagText = tags.toLowerCase();
-      const hasConfirmedTag = lowerTagText === 'confirmed' || lowerTagText === 'appt confirmed';
-      
-      if (hasConfirmedTag) {
-        this.logger.log(`✅ Found confirmed tag in string: "${tags}" for opportunity: ${opportunity.name}`);
+      if (!hasConfirmedTag) {
+        this.logger.log(`❌ No confirmed tag found for "${opportunity.name}" - tags checked: [${tagNames.join(', ')}]`);
       }
       
       return hasConfirmedTag;
     }
 
+    if (typeof tags === 'string') {
+      const lowerTagText = tags.toLowerCase().trim();
+      // Check for exact matches or contains "confirmed" or "appt confirmed"
+      const hasConfirmedTag = lowerTagText === 'confirmed' || 
+                              lowerTagText === 'appt confirmed' ||
+                              lowerTagText.includes('appt confirmed') ||
+                              (lowerTagText.includes('confirmed') && lowerTagText.includes('appt'));
+      
+      this.logger.log(`🔍 Checking tag string for "${opportunity.name}": "${tags}"`);
+      
+      if (hasConfirmedTag) {
+        this.logger.log(`✅ Found confirmed tag in string: "${tags}" for opportunity: ${opportunity.name}`);
+      } else {
+        this.logger.log(`❌ No confirmed tag found in string for "${opportunity.name}": "${tags}"`);
+      }
+      
+      return hasConfirmedTag;
+    }
+
+    this.logger.log(`❌ No tags found for "${opportunity.name}" - tags field type: ${typeof tags}, value: ${JSON.stringify(tags)}`);
     return false;
   }
 
@@ -3709,6 +3787,293 @@ export class OpportunitiesService {
     } catch (error) {
       this.logger.error(`Error moving opportunity to signed contract stage: ${error.message}`);
       return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Sync opportunities from GHL to database
+   * Saves/updates opportunities with all relevant data (customer, rep, status, etc.)
+   */
+  async syncOpportunitiesFromGHL(userId: string, limit?: number): Promise<{
+    synced: number;
+    updated: number;
+    created: number;
+    errors: number;
+  }> {
+    this.logger.log(`🔄 Starting opportunity sync from GHL for user: ${userId}`);
+    
+    try {
+      const credentials = this.getGhlCredentials();
+      if (!credentials) {
+        throw new Error('GHL credentials not configured');
+      }
+
+      // Only get opportunities from the specific stages (AI and Manual Home Survey Booked)
+      // This is much faster than fetching all opportunities
+      const aiStageId = '8904bbe1-53a3-468e-94e4-f13cb04a4947'; // (AI Bot) Home Survey Booked
+      const manualStageId = '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c'; // (Manual) Home Survey Booked
+      
+      this.logger.log(`📊 Fetching opportunities from 2 specific stages only (much faster)`);
+      
+      // Get opportunities from these specific stages only
+      const ghlOpportunities = await this.goHighLevelService.getOpportunitiesByStages(
+        credentials.accessToken,
+        credentials.locationId,
+        [aiStageId, manualStageId]
+      );
+
+      this.logger.log(`📊 Found ${ghlOpportunities.length} opportunities from specific stages`);
+
+      // Limit if specified
+      const opportunitiesToSync = limit 
+        ? ghlOpportunities.slice(0, limit)
+        : ghlOpportunities;
+
+      this.logger.log(`📊 Syncing ${opportunitiesToSync.length} opportunities`);
+
+      let synced = 0;
+      let updated = 0;
+      let created = 0;
+      let errors = 0;
+
+      // Process opportunities in batches to avoid overwhelming the database
+      const batchSize = 50;
+      for (let i = 0; i < opportunitiesToSync.length; i += batchSize) {
+        const batch = opportunitiesToSync.slice(i, i + batchSize);
+        
+        await Promise.all(
+          batch.map(async (ghlOpp: any) => {
+            try {
+              await this.upsertOpportunityFromGHL(ghlOpp, credentials);
+              synced++;
+            } catch (error) {
+              this.logger.error(`Error syncing opportunity ${ghlOpp.id}:`, error.message);
+              errors++;
+            }
+          })
+        );
+
+        // Small delay between batches
+        if (i + batchSize < opportunitiesToSync.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+
+      this.logger.log(`✅ Sync complete: ${synced} synced, ${created} created, ${updated} updated, ${errors} errors`);
+      
+      return { synced, updated, created, errors };
+    } catch (error) {
+      this.logger.error(`Error syncing opportunities from GHL:`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Upsert a single opportunity from GHL data
+   */
+  private async upsertOpportunityFromGHL(
+    ghlOpp: any,
+    credentials: { accessToken: string; locationId: string }
+  ): Promise<void> {
+    try {
+      // Extract customer information
+      const contact = ghlOpp.contact || {};
+      const customerName = this.extractCustomerName(ghlOpp, contact);
+      const customerFirstName = contact.firstName || null;
+      const customerLastName = contact.lastName || null;
+      const customerEmail = contact.email || null;
+      const customerPhone = contact.phone || null;
+      
+      // Extract address information
+      const addressObj = contact.address || {};
+      const customerAddress = addressObj.address1 || addressObj.address || null;
+      const customerCity = addressObj.city || null;
+      const customerState = addressObj.state || null;
+      const customerPostcode = addressObj.postalCode || addressObj.zipCode || null;
+
+      // Find assigned user by GHL user ID
+      let assignedUserId: string | null = null;
+      if (ghlOpp.assignedTo) {
+        const assignedUser = await this.prisma.user.findFirst({
+          where: { ghlUserId: ghlOpp.assignedTo },
+          select: { id: true, name: true },
+        });
+        if (assignedUser) {
+          assignedUserId = assignedUser.id;
+        }
+      }
+
+      // Get assigned user name from GHL or our DB
+      let assignedToName: string | null = null;
+      if (ghlOpp.assignedTo) {
+        if (assignedUserId) {
+          const user = await this.prisma.user.findUnique({
+            where: { id: assignedUserId },
+            select: { name: true, ghlUserName: true },
+          });
+          assignedToName = user?.name || user?.ghlUserName || null;
+        }
+        // If not found in DB, try to get from GHL (would need additional API call)
+      }
+
+      // Extract tags
+      const tags = Array.isArray(ghlOpp.tags) 
+        ? ghlOpp.tags.map((tag: any) => typeof tag === 'string' ? tag : tag.name || tag.title || '')
+        : [];
+
+      // Get outcome from existing OpportunityOutcome if it exists
+      const existingOutcome = await this.prisma.opportunityOutcome.findUnique({
+        where: { ghlOpportunityId: ghlOpp.id },
+        select: { outcome: true },
+      });
+
+      // Upsert the opportunity
+      await this.prisma.opportunity.upsert({
+        where: { ghlOpportunityId: ghlOpp.id },
+        create: {
+          ghlOpportunityId: ghlOpp.id,
+          name: ghlOpp.name || 'Unnamed Opportunity',
+          userId: assignedUserId,
+          assignedToGhlId: ghlOpp.assignedTo || null,
+          assignedToName: assignedToName,
+          contactId: ghlOpp.contactId || contact.id || null,
+          customerName: customerName,
+          customerFirstName: customerFirstName,
+          customerLastName: customerLastName,
+          customerEmail: customerEmail,
+          customerPhone: customerPhone,
+          customerAddress: customerAddress,
+          customerCity: customerCity,
+          customerState: customerState,
+          customerPostcode: customerPostcode,
+          monetaryValue: ghlOpp.monetaryValue || null,
+          status: ghlOpp.status || null,
+          pipelineId: ghlOpp.pipelineId || null,
+          pipelineName: ghlOpp.pipelineName || null,
+          pipelineStageId: ghlOpp.pipelineStageId || null,
+          stageName: ghlOpp.stageName || null,
+          outcome: existingOutcome?.outcome || null,
+          tags: tags,
+          notes: ghlOpp.notes || null,
+          source: ghlOpp.source || null,
+          ghlData: ghlOpp as any, // Store full GHL data
+          ghlCreatedAt: ghlOpp.createdAt ? new Date(ghlOpp.createdAt) : null,
+          ghlUpdatedAt: ghlOpp.updatedAt ? new Date(ghlOpp.updatedAt) : null,
+          lastSyncedAt: new Date(),
+        },
+        update: {
+          name: ghlOpp.name || 'Unnamed Opportunity',
+          userId: assignedUserId,
+          assignedToGhlId: ghlOpp.assignedTo || null,
+          assignedToName: assignedToName,
+          contactId: ghlOpp.contactId || contact.id || null,
+          customerName: customerName,
+          customerFirstName: customerFirstName,
+          customerLastName: customerLastName,
+          customerEmail: customerEmail,
+          customerPhone: customerPhone,
+          customerAddress: customerAddress,
+          customerCity: customerCity,
+          customerState: customerState,
+          customerPostcode: customerPostcode,
+          monetaryValue: ghlOpp.monetaryValue || null,
+          status: ghlOpp.status || null,
+          pipelineId: ghlOpp.pipelineId || null,
+          pipelineName: ghlOpp.pipelineName || null,
+          pipelineStageId: ghlOpp.pipelineStageId || null,
+          stageName: ghlOpp.stageName || null,
+          outcome: existingOutcome?.outcome || null,
+          tags: tags,
+          notes: ghlOpp.notes || null,
+          source: ghlOpp.source || null,
+          ghlData: ghlOpp as any,
+          ghlCreatedAt: ghlOpp.createdAt ? new Date(ghlOpp.createdAt) : null,
+          ghlUpdatedAt: ghlOpp.updatedAt ? new Date(ghlOpp.updatedAt) : null,
+          lastSyncedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Error upserting opportunity ${ghlOpp.id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Extract customer name from opportunity and contact data
+   */
+  private extractCustomerName(opportunity: any, contact: any): string | null {
+    // Priority 1: First and last name combination
+    if (contact?.firstName && contact?.lastName) {
+      return `${contact.firstName.trim()} ${contact.lastName.trim()}`;
+    }
+    // Priority 2: Full name field
+    if (contact?.name && contact.name.trim() !== '') {
+      return contact.name.trim();
+    }
+    // Priority 3: Opportunity name/title
+    if (opportunity?.name && opportunity.name.trim() !== '') {
+      return opportunity.name.trim();
+    }
+    // Priority 4: Extract from email
+    if (contact?.email) {
+      const emailPrefix = contact.email.split('@')[0];
+      return emailPrefix.replace(/[._-]/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+    }
+    return null;
+  }
+
+  /**
+   * Get opportunities from database (with optional filters)
+   */
+  async getOpportunitiesFromDB(filters?: {
+    userId?: string;
+    outcome?: string;
+    status?: string;
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+  }): Promise<any[]> {
+    try {
+      const where: any = {};
+
+      if (filters?.userId) {
+        where.userId = filters.userId;
+      }
+
+      if (filters?.outcome) {
+        where.outcome = filters.outcome;
+      }
+
+      if (filters?.status) {
+        where.status = filters.status;
+      }
+
+      if (filters?.startDate || filters?.endDate) {
+        where.createdAt = {};
+        if (filters.startDate) where.createdAt.gte = filters.startDate;
+        if (filters.endDate) where.createdAt.lte = filters.endDate;
+      }
+
+      const opportunities = await this.prisma.opportunity.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              ghlUserName: true,
+            },
+          },
+        },
+        orderBy: { lastSyncedAt: 'desc' },
+        take: filters?.limit || 1000,
+      });
+
+      return opportunities;
+    } catch (error) {
+      this.logger.error('Error getting opportunities from DB:', error);
+      throw error;
     }
   }
 } 

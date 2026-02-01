@@ -95,11 +95,27 @@ export class AppointmentService {
       const startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000)); // 30 days ago
       const endDate = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days from now
 
-      // Get all appointments from GHL using the user's GHL user ID
+      // Get all appointments from GHL
       let allAppointments: any[] = [];
       
-      if (ghlUserId) {
-        // Try to get appointments using the user's GHL user ID
+      // For ADMIN users, get ALL appointments directly (no filtering, no date parsing)
+      if (user.role === 'ADMIN') {
+        try {
+          this.logger.log(`[ADMIN] Fetching ALL appointments for ${user.name}...`);
+          
+          // Get all appointments directly - no date filtering, no user/calendar filtering
+          allAppointments = await this.goHighLevelService.getAllAppointments(
+            credentials.accessToken,
+            credentials.locationId
+          );
+          
+          this.logger.log(`[ADMIN] Fetched ${allAppointments.length} total appointments`);
+        } catch (error) {
+          this.logger.error(`Failed to fetch all appointments for ADMIN: ${error.message}`);
+          allAppointments = [];
+        }
+      } else if (ghlUserId) {
+        // For regular users, try to get appointments using the user's GHL user ID (more efficient)
         try {
           allAppointments = await this.goHighLevelService.getAppointmentsByUserId(
             credentials.accessToken,

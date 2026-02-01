@@ -85,45 +85,10 @@ export class ContractService {
         contractPdfPath = pdfResult.pdfPath;
       }
 
-      // 2. Get booking confirmation PDF path
-      const bookConfirmationPdfPath = path.join(
-        process.cwd(),
-        'src',
-        'email_confirmation',
-        'Confirmation of Booking Letter.pdf'
-      );
-
-      if (!fs.existsSync(bookConfirmationPdfPath)) {
-        this.logger.warn(`Booking confirmation PDF not found at ${bookConfirmationPdfPath}, creating contract-only signing workflow`);
-        // Fall back to contract-only if booking confirmation PDF doesn't exist
-        const signingWorkflow = await this.docuSealService.createContractSigningWorkflowWithBase64(
-          contractPdfPath,
-          contractData.opportunityId,
-          {
-            name: contractData.customerName,
-            email: contractData.customerEmail,
-          },
-          {
-            customerName: contractData.customerName,
-            date: contractData.date,
-            postcode: contractData.postcode,
-            ...contractData.solarData,
-          }
-        );
-
-        return {
-          templateId: signingWorkflow.templateId,
-          submissionId: signingWorkflow.submissionId,
-          signingUrl: signingWorkflow.signingUrl,
-          status: 'pending',
-        };
-      }
-
-      // 3. Create DocuSeal template and submission - CONTRACT + BOOKING CONFIRMATION COMBINED
-      this.logger.log(`Creating combined contract + booking confirmation signing workflow`);
-      const signingWorkflow = await this.docuSealService.createContractAndBookingConfirmationSigningWorkflow(
+      // 2. Create DocuSeal template and submission - CONTRACT ONLY (booking confirmation is separate)
+      this.logger.log(`Creating contract-only signing workflow (booking confirmation will be separate)`);
+      const signingWorkflow = await this.docuSealService.createContractSigningWorkflowWithBase64(
         contractPdfPath,
-        bookConfirmationPdfPath,
         contractData.opportunityId,
         {
           name: contractData.customerName,

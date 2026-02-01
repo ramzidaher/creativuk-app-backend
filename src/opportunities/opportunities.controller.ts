@@ -495,4 +495,44 @@ export class OpportunitiesController {
   async getSurveyorByName(@Param('name') name: string) {
     return this.dynamicSurveyorService.getSurveyorByName(name);
   }
+
+  /**
+   * Sync opportunities from GHL to database (Admin only)
+   */
+  @Post('sync-from-ghl')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async syncOpportunitiesFromGHL(
+    @Request() req,
+    @Query('limit') limit?: string,
+  ) {
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    return this.opportunitiesService.syncOpportunitiesFromGHL(req.user.sub, limitNum);
+  }
+
+  /**
+   * Get opportunities from database (Admin only)
+   */
+  @Get('db/all')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async getOpportunitiesFromDB(
+    @Request() req,
+    @Query('userId') userId?: string,
+    @Query('outcome') outcome?: string,
+    @Query('status') status?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const filters: any = {};
+    if (userId) filters.userId = userId;
+    if (outcome) filters.outcome = outcome;
+    if (status) filters.status = status;
+    if (startDate) filters.startDate = new Date(startDate);
+    if (endDate) filters.endDate = new Date(endDate);
+    if (limit) filters.limit = parseInt(limit, 10);
+
+    return this.opportunitiesService.getOpportunitiesFromDB(filters);
+  }
 } 

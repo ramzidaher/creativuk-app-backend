@@ -24,6 +24,7 @@ import { CalculatorProgressModule } from './calculator-progress/calculator-progr
 import { SystemSettingsModule } from './system-settings/system-settings.module';
 import { OpportunityOutcomesModule } from './opportunity-outcomes/opportunity-outcomes.module';
 import { DisclaimerModule } from './disclaimer/disclaimer.module';
+import { ExpressFormModule } from './expressform/expressform.module';
 import { EmailConfirmationModule } from './email_confirmation/email-confirmation.module';
 import { AdminModule } from './admin/admin.module';
 import { HealthModule } from './health/health.module';
@@ -64,6 +65,7 @@ import { AppService } from './app.service';
     SystemSettingsModule,
     OpportunityOutcomesModule,
     DisclaimerModule,
+    ExpressFormModule,
     EmailConfirmationModule,
     AdminModule,
     HealthModule,

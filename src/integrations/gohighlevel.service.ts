@@ -425,6 +425,36 @@ export class GoHighLevelService {
     }
   }
 
+  // Fetch ALL appointments from GoHighLevel (no date filtering, no user/calendar filtering)
+  async getAllAppointments(accessToken: string, locationId: string): Promise<any[]> {
+    const url = `${this.baseUrl}/appointments/`;
+    
+    try {
+      // Get all appointments without date filtering - just get everything
+      const params = {
+        includeAll: true, // Include contact and more data
+        limit: 10000 // High limit to get all appointments
+      };
+
+      const response = await axios.get(url, {
+        headers: this.getHeaders(accessToken),
+        params: params,
+        timeout: 30000, // Longer timeout for large requests
+      });
+      
+      this.logger.log(`All appointments API response status: ${response.status}`);
+      this.logger.log(`Fetched ${(response.data as any)?.appointments?.length || 0} total appointments`);
+      return (response.data as any).appointments || [];
+    } catch (error) {
+      this.logger.error(`Error fetching all appointments: ${error.message}`);
+      if (error.response) {
+        this.logger.error(`All appointments API error status: ${error.response.status}`);
+        this.logger.error(`All appointments API error data: ${JSON.stringify(error.response.data)}`);
+      }
+      return [];
+    }
+  }
+
   // Fetch appointments from GoHighLevel
   async getAppointments(accessToken: string, locationId: string): Promise<any[]> {
     const url = `${this.baseUrl}/appointments/`;
@@ -485,6 +515,69 @@ export class GoHighLevelService {
       if (error.response) {
         this.logger.error(`Appointments API error status: ${error.response.status}`);
         this.logger.error(`Appointments API error data: ${JSON.stringify(error.response.data)}`);
+      }
+      return [];
+    }
+  }
+
+  // Get all calendars for a location
+  async getCalendars(accessToken: string, locationId: string): Promise<any[]> {
+    const url = `${this.baseUrl}/calendars/`;
+    
+    try {
+      const response = await axios.get(url, {
+        headers: this.getHeaders(accessToken),
+        params: {
+          locationId: locationId,
+          limit: 1000 // Get all calendars
+        },
+        timeout: 10000,
+      });
+      
+      this.logger.log(`Successfully fetched ${(response.data as any)?.calendars?.length || 0} calendars from GHL`);
+      return (response.data as any)?.calendars || [];
+    } catch (error) {
+      this.logger.error(`Error fetching calendars: ${error.message}`);
+      if (error.response) {
+        this.logger.error(`Calendars API error status: ${error.response.status}`);
+        this.logger.error(`Calendars API error data: ${JSON.stringify(error.response.data)}`);
+      }
+      return [];
+    }
+  }
+
+  // Fetch appointments for a specific calendar ID
+  async getAppointmentsByCalendarId(accessToken: string, locationId: string, calendarId: string): Promise<any[]> {
+    const url = `${this.baseUrl}/appointments/`;
+    
+    // Calculate date range (last 60 days to next 90 days)
+    const now = new Date();
+    const startDate = new Date(now.getTime() - (60 * 24 * 60 * 60 * 1000)); // 60 days ago
+    const endDate = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000)); // 90 days from now
+    
+    try {
+      const params = {
+        startDate: Math.floor(startDate.getTime()),
+        endDate: Math.floor(endDate.getTime()),
+        calendarId: calendarId, // Use the specific calendar ID
+        includeAll: true, // Include contact and more data
+        limit: 1000 // Add limit to get more appointments
+      };
+
+      const response = await axios.get(url, {
+        headers: this.getHeaders(accessToken),
+        params: params,
+        timeout: 10000,
+      });
+      
+      this.logger.log(`Appointments by calendarId API response status: ${response.status}`);
+      this.logger.log(`Appointments by calendarId API response data keys: ${Object.keys(response.data || {}).join(', ')}`);
+      return (response.data as any).appointments || [];
+    } catch (error) {
+      this.logger.error(`Error fetching appointments by calendarId: ${error.message}`);
+      if (error.response) {
+        this.logger.error(`Appointments by calendarId API error status: ${error.response.status}`);
+        this.logger.error(`Appointments by calendarId API error data: ${JSON.stringify(error.response.data)}`);
       }
       return [];
     }

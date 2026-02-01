@@ -248,25 +248,44 @@ export class OneDriveFileManagerService {
         this.logger.log(`Created survey_images folder: ${surveyImagesFolder}`);
       }
 
+      this.logger.log(`📷 [SURVEY_IMAGES] Starting to copy ${surveyImages.length} survey images to OneDrive`);
+
       const copiedImages: string[] = [];
       let successCount = 0;
       let skippedCount = 0;
+      
+      // Track processed file paths to avoid duplicates
+      const processedFilePaths = new Set<string>();
 
-      for (const image of surveyImages) {
+      for (let index = 0; index < surveyImages.length; index++) {
+        const image = surveyImages[index];
         try {
-          // Generate a consistent filename based on the original filename or field name
-          // Use the original filename if available, otherwise use field name with a hash of the file path
+          // Skip if we've already processed this exact file path
+          if (processedFilePaths.has(image.filePath)) {
+            this.logger.log(`⏭️ [COPY] Skipping duplicate file path: ${image.filePath.substring(0, 100)}...`);
+            skippedCount++;
+            continue;
+          }
+          processedFilePaths.add(image.filePath);
+
+          // Generate a unique filename based on the original filename or field name
+          // Always include a unique identifier (hash of filePath) to ensure uniqueness
+          const pathHash = crypto.createHash('md5').update(image.filePath).digest('hex').substring(0, 8);
           let baseFileName: string;
+          
           if (image.originalName) {
             // Use original name but sanitize it
             baseFileName = image.originalName.replace(/[<>:"/\\|?*]/g, '_');
             // Remove extension if present (we'll add it based on downloaded content)
             baseFileName = baseFileName.replace(/\.[^/.]+$/, '');
+            // Always append hash to ensure uniqueness, even if multiple images have same original name
+            baseFileName = `${baseFileName}_${pathHash}`;
           } else if (image.fileName) {
             baseFileName = image.fileName.replace(/[<>:"/\\|?*]/g, '_').replace(/\.[^/.]+$/, '');
+            // Always append hash to ensure uniqueness
+            baseFileName = `${baseFileName}_${pathHash}`;
           } else {
-            // Fallback: use field name with a hash of the file path for consistency
-            const pathHash = crypto.createHash('md5').update(image.filePath).digest('hex').substring(0, 8);
+            // Fallback: use field name with a hash of the file path for uniqueness
             baseFileName = `${image.fieldName}_${pathHash}`;
           }
 
@@ -310,9 +329,12 @@ export class OneDriveFileManagerService {
       }
 
       const totalProcessed = successCount + skippedCount;
+      const failedCount = surveyImages.length - totalProcessed;
       const message = skippedCount > 0
-        ? `Processed ${totalProcessed}/${surveyImages.length} survey images (${successCount} copied, ${skippedCount} already existed)`
-        : `Successfully copied ${successCount}/${surveyImages.length} survey images`;
+        ? `Processed ${totalProcessed}/${surveyImages.length} survey images (${successCount} copied, ${skippedCount} already existed${failedCount > 0 ? `, ${failedCount} failed` : ''})`
+        : `Successfully copied ${successCount}/${surveyImages.length} survey images${failedCount > 0 ? ` (${failedCount} failed)` : ''}`;
+
+      this.logger.log(`📷 [SURVEY_IMAGES] Copy complete: ${message}`);
 
       return {
         success: totalProcessed > 0,
@@ -593,7 +615,7 @@ export class OneDriveFileManagerService {
     customerName: string,
     signedDocumentBuffer: Buffer,
     auditLogBuffer: Buffer | null,
-    documentType: 'CONTRACT' | 'DISCLAIMER' | 'BOOKING_CONFIRMATION',
+    documentType: 'CONTRACT' | 'DISCLAIMER' | 'BOOKING_CONFIRMATION' | 'EXPRESS_CONSENT',
     submissionId: string
   ): Promise<{ success: boolean; message: string; error?: string; folderPath?: string }> {
     try {

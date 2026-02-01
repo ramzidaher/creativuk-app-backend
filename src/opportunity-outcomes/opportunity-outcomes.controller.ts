@@ -12,6 +12,7 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import { OpportunityOutcomesService, OpportunityOutcomeData } from './opportunity-outcomes.service';
 
 @Controller('opportunity-outcomes')
@@ -61,12 +62,12 @@ export class OpportunityOutcomesController {
    * Get win/loss statistics for all users (admin only)
    */
   @Get('admin/all-stats')
+  @UseGuards(AdminGuard)
   async getAllUsersStats(
     @Request() req,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
-    // TODO: Add admin role check
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
     
@@ -74,19 +75,50 @@ export class OpportunityOutcomesController {
   }
 
   /**
+   * Get all reps' win/loss stats aggregated (admin only)
+   * This pulls all reps stats into one view
+   */
+  @Get('admin/all-reps-stats')
+  @UseGuards(AdminGuard)
+  async getAllRepsStats(
+    @Request() req,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const start = startDate ? new Date(startDate) : undefined;
+    const end = endDate ? new Date(endDate) : undefined;
+    
+    return this.opportunityOutcomesService.getAllRepsWinLossStats(start, end);
+  }
+
+  /**
    * Get overall company statistics (admin only)
    */
   @Get('admin/overall-stats')
+  @UseGuards(AdminGuard)
   async getOverallStats(
     @Request() req,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
-    // TODO: Add admin role check
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
     
     return this.opportunityOutcomesService.getOverallStats(start, end);
+  }
+
+  /**
+   * Toggle cancelled status for an opportunity (admin only)
+   * If opportunity is already cancelled, it will be set to IN_PROGRESS
+   * If opportunity is not cancelled, it will be set to CANCELLED
+   */
+  @Put('admin/toggle-cancelled/:opportunityId')
+  @UseGuards(AdminGuard)
+  async toggleCancelledStatus(
+    @Request() req,
+    @Param('opportunityId') opportunityId: string,
+  ) {
+    return this.opportunityOutcomesService.toggleCancelledStatus(opportunityId, req.user.sub);
   }
 
   /**

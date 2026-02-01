@@ -756,6 +756,146 @@ export class DocuSealController {
   }
 
   /**
+   * Create a signing workflow for Express Consent only
+   * POST /docuseal/express-consent
+   */
+  @Post('express-consent')
+  async createExpressConsentSigning(
+    @Body() body: {
+      expressConsentPdfPath?: string;
+      opportunityId: string;
+      customerData?: {
+        name: string;
+        email: string;
+        address?: string;
+      };
+      customerName?: string;
+      userId?: string;
+    }
+  ) {
+    try {
+      const { expressConsentPdfPath, opportunityId, customerData, customerName, userId } = body;
+
+      if (!opportunityId) {
+        throw new HttpException(
+          {
+            success: false,
+            message: 'Invalid input: opportunityId is required',
+          },
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      // Always use the express consent template PDF (DocuSeal will handle signing)
+      const templatePath = path.join(process.cwd(), 'src', 'expressform', 'Express Consent.pdf');
+      const pdfPath = expressConsentPdfPath || templatePath;
+
+      if (!fs.existsSync(pdfPath)) {
+        throw new HttpException(
+          {
+            success: false,
+            message: `Express consent template PDF not found at: ${templatePath}. Please ensure the file exists.`,
+          },
+          HttpStatus.NOT_FOUND
+        );
+      }
+
+      this.logger.log(`Using express consent template PDF: ${pdfPath}`);
+
+      // Auto-fetch customer data if userId is provided
+      let finalCustomerData: { name: string; email: string; address?: string } | undefined = customerData;
+      let finalCustomerName: string | undefined = customerName;
+      
+      if (userId && (!customerData || !customerName)) {
+        try {
+          const opportunity = await this.opportunitiesService.getOpportunityById(opportunityId, userId);
+          if (opportunity) {
+            const fetchedName = opportunity.contactName || customerName || 'Customer';
+            finalCustomerName = fetchedName;
+            
+            // Fetch full customer details including address
+            let customerAddress: string | undefined;
+            try {
+              const opportunityDetails = await this.opportunitiesService.getOpportunityDetails(opportunityId, userId);
+              if (opportunityDetails.contactAddress) {
+                customerAddress = opportunityDetails.contactAddress;
+              } else if (opportunityDetails.address) {
+                customerAddress = opportunityDetails.address;
+              } else {
+                // Construct address from available fields
+                const addressParts = [
+                  opportunityDetails.contactAddressLine2,
+                  opportunityDetails.contactCity,
+                  opportunityDetails.contactState,
+                  opportunityDetails.contactPostcode
+                ].filter(Boolean);
+                if (addressParts.length > 0) {
+                  customerAddress = addressParts.join(', ');
+                }
+              }
+            } catch (addressError) {
+              this.logger.warn(`Failed to fetch customer address: ${addressError.message}`);
+            }
+            
+            finalCustomerData = customerData ? {
+              ...customerData,
+              address: customerData.address || customerAddress,
+            } : {
+              name: fetchedName,
+              email: opportunity.contactEmail || '',
+              address: customerAddress,
+            };
+            this.logger.log(`Auto-fetched customer data: ${finalCustomerName}, ${finalCustomerData.email}, address: ${customerAddress || 'not available'}`);
+          }
+        } catch (error) {
+          this.logger.warn(`Failed to fetch customer data: ${error.message}`);
+        }
+      }
+
+      if (!finalCustomerData || !finalCustomerName) {
+        throw new HttpException(
+          {
+            success: false,
+            message: 'Invalid input: customerData and customerName are required (or provide userId to auto-fetch)',
+          },
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      // TypeScript now knows these are defined after the check above
+      const validatedCustomerData = finalCustomerData;
+      const validatedCustomerName = finalCustomerName;
+
+      // Call the service method
+      const result = await this.docuSealService.createExpressConsentSigningWorkflow(
+        pdfPath,
+        opportunityId,
+        validatedCustomerData,
+        validatedCustomerName
+      );
+
+      return {
+        success: true,
+        message: 'Express consent signing workflow created successfully. Email sent to customer.',
+        data: result,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to create express consent signing workflow: ${error.message}`);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        {
+          success: false,
+          message: 'Internal server error during express consent signing workflow creation',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  /**
    * Create a disclaimer template for verification (without submission)
    * POST /docuseal/disclaimer/template
    * Creates a template with fields but doesn't send it to the customer

@@ -10,7 +10,6 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
-.env.test
 
 # Build outputs
 dist/
@@ -153,6 +152,7 @@ src/excel-file-calculator/output/
 src/excel-file-calculator/opportunities/
 src/excel-file-calculator/epvs-opportunities/
 src/disclaimer/signed/
+src/expressform/signed/
 src/email_confirmation/signed/
 src/video-generation/output/
 src/solar-projection/output/

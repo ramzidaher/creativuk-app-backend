@@ -6,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
 export interface OpportunityOutcomeData {
   ghlOpportunityId: string;
   userId: string;
-  outcome: 'WON' | 'LOST' | 'ABANDONED' | 'IN_PROGRESS';
+  outcome: 'WON' | 'LOST' | 'ABANDONED' | 'CANCELLED' | 'IN_PROGRESS';
   value?: number;
   notes?: string;
   stageAtOutcome?: string;
@@ -17,6 +17,7 @@ export interface WinLossStats {
   won: number;
   lost: number;
   abandoned: number;
+  cancelled: number;
   inProgress: number;
   totalValue: number;
   wonValue: number;
@@ -63,6 +64,7 @@ export class OpportunityOutcomesService {
         return null;
       }
       
+      this.logger.log(`Using GHL credentials - Location ID: ${locationId}`);
       return { accessToken, locationId };
     } catch (error) {
       this.logger.warn('Error extracting location ID from GHL token:', error.message);
@@ -79,13 +81,16 @@ export class OpportunityOutcomesService {
       }
       
       // Decode the payload (second part)
-      const payload = parts[1];
-      // Add padding if needed for base64 decoding
-      const paddedPayload = payload + '='.repeat((4 - payload.length % 4) % 4);
-      const decodedPayload = Buffer.from(paddedPayload, 'base64').toString('utf-8');
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
       
-      return JSON.parse(decodedPayload);
+      // Return object with locationId checking both location_id and locationId
+      return {
+        locationId: payload.location_id || payload.locationId,
+        userId: payload.sub || payload.userId,
+        companyId: payload.companyId
+      };
     } catch (error) {
+      this.logger.error('Error extracting token data:', error);
       throw new Error(`Failed to decode JWT token: ${error.message}`);
     }
   }
@@ -388,15 +393,233 @@ export class OpportunityOutcomesService {
   }
 
   /**
+   * Toggle cancelled status for an opportunity (Admin only)
+   * If opportunity is already cancelled, it will be set to IN_PROGRESS
+   * If opportunity is not cancelled, it will be set to CANCELLED
+   * Also updates the saved Opportunity record if it exists
+   */
+  async toggleCancelledStatus(ghlOpportunityId: string, userId: string): Promise<any> {
+    this.logger.log(`Toggling cancelled status for opportunity ${ghlOpportunityId}`);
+
+    try {
+      // Get the opportunity outcome
+      const existingOutcome = await this.prisma.opportunityOutcome.findUnique({
+        where: { ghlOpportunityId },
+        include: {
+          user: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      });
+
+      // Also check if we have a saved Opportunity record
+      const savedOpportunity = await this.prisma.opportunity.findUnique({
+        where: { ghlOpportunityId },
+        select: { userId: true, customerName: true },
+      });
+
+      let outcome;
+      if (existingOutcome) {
+        // Toggle: if cancelled, set to IN_PROGRESS; otherwise set to CANCELLED
+        const newOutcome = existingOutcome.outcome === 'CANCELLED' ? 'IN_PROGRESS' : 'CANCELLED';
+        
+        outcome = await this.prisma.opportunityOutcome.update({
+          where: { ghlOpportunityId },
+          data: {
+            outcome: newOutcome,
+            updatedAt: new Date(),
+            notes: existingOutcome.notes 
+              ? `${existingOutcome.notes}\n[${new Date().toISOString()}] Status toggled to ${newOutcome} by admin`
+              : `[${new Date().toISOString()}] Status toggled to ${newOutcome} by admin`,
+          },
+          include: {
+            user: {
+              select: { name: true, email: true },
+            },
+          },
+        });
+
+        // Update saved Opportunity record if it exists
+        if (savedOpportunity) {
+          await this.prisma.opportunity.update({
+            where: { ghlOpportunityId },
+            data: {
+              outcome: newOutcome,
+              updatedAt: new Date(),
+            },
+          });
+          this.logger.log(`Updated saved Opportunity record with outcome: ${newOutcome}`);
+        }
+
+        this.logger.log(`Updated opportunity ${ghlOpportunityId} from ${existingOutcome.outcome} to ${newOutcome}`);
+      } else {
+        // Create new outcome as CANCELLED
+        // First, try to find the user from saved Opportunity or OpportunityProgress
+        let opportunityUserId = userId; // Default to admin's userId
+        
+        if (savedOpportunity?.userId) {
+          opportunityUserId = savedOpportunity.userId;
+          this.logger.log(`Found saved opportunity, using userId: ${opportunityUserId}`);
+        } else {
+          const opportunityProgress = await this.prisma.opportunityProgress.findUnique({
+            where: { ghlOpportunityId },
+            select: { userId: true },
+          });
+
+          if (opportunityProgress) {
+            opportunityUserId = opportunityProgress.userId;
+            this.logger.log(`Found opportunity progress, using userId: ${opportunityUserId}`);
+          } else {
+            this.logger.log(`No opportunity found, using admin userId: ${opportunityUserId}`);
+          }
+        }
+
+        const opportunityUser = await this.prisma.user.findUnique({
+          where: { id: opportunityUserId },
+        });
+
+        if (!opportunityUser) {
+          throw new NotFoundException('User not found for this opportunity');
+        }
+
+        outcome = await this.prisma.opportunityOutcome.create({
+          data: {
+            ghlOpportunityId,
+            userId: opportunityUser.id,
+            outcome: 'CANCELLED',
+            notes: `[${new Date().toISOString()}] Marked as cancelled by admin`,
+          },
+          include: {
+            user: {
+              select: { name: true, email: true },
+            },
+          },
+        });
+
+        // Update saved Opportunity record if it exists
+        if (savedOpportunity) {
+          await this.prisma.opportunity.update({
+            where: { ghlOpportunityId },
+            data: {
+              outcome: 'CANCELLED',
+              updatedAt: new Date(),
+            },
+          });
+          this.logger.log(`Updated saved Opportunity record with outcome: CANCELLED`);
+        }
+
+        this.logger.log(`Created new cancelled outcome for opportunity ${ghlOpportunityId}`);
+      }
+
+      return outcome;
+    } catch (error) {
+      this.logger.error(`Error toggling cancelled status for opportunity ${ghlOpportunityId}:`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all reps' win/loss stats aggregated (Admin only)
+   * This pulls all reps stats into one view
+   */
+  async getAllRepsWinLossStats(
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<{
+    overall: WinLossStats;
+    byRep: UserWinLossStats[];
+    summary: {
+      totalReps: number;
+      topPerformer: UserWinLossStats | null;
+      period: {
+        start: Date;
+        end: Date;
+      };
+    };
+  }> {
+    this.logger.log('Getting all reps win/loss stats (aggregated)');
+
+    try {
+      // Get all active users (reps/surveyors)
+      const users = await this.prisma.user.findMany({
+        where: { 
+          status: 'ACTIVE',
+          role: 'SURVEYOR' // Only get surveyors/reps
+        },
+        select: { id: true, name: true, email: true },
+      });
+
+      // Get stats for each rep
+      const repsStats = await Promise.all(
+        users.map(async (user) => {
+          return this.getUserWinLossStats(user.id, startDate, endDate);
+        })
+      );
+
+      // Calculate overall stats
+      const overallStats: WinLossStats = {
+        totalOpportunities: repsStats.reduce((sum, stat) => sum + stat.totalOpportunities, 0),
+        won: repsStats.reduce((sum, stat) => sum + stat.won, 0),
+        lost: repsStats.reduce((sum, stat) => sum + stat.lost, 0),
+        abandoned: repsStats.reduce((sum, stat) => sum + stat.abandoned, 0),
+        cancelled: repsStats.reduce((sum, stat) => sum + stat.cancelled, 0),
+        inProgress: repsStats.reduce((sum, stat) => sum + stat.inProgress, 0),
+        totalValue: repsStats.reduce((sum, stat) => sum + stat.totalValue, 0),
+        wonValue: repsStats.reduce((sum, stat) => sum + stat.wonValue, 0),
+        conversionRate: 0, // Will calculate below
+        averageDealValue: 0, // Will calculate below
+        averageDuration: 0,
+      };
+
+      // Calculate overall conversion rate
+      overallStats.conversionRate = overallStats.totalOpportunities > 0 
+        ? (overallStats.won / overallStats.totalOpportunities) * 100 
+        : 0;
+
+      // Calculate overall average deal value
+      overallStats.averageDealValue = overallStats.won > 0 
+        ? overallStats.wonValue / overallStats.won 
+        : 0;
+
+      // Find top performer by won value
+      const topPerformer = repsStats.length > 0
+        ? repsStats.reduce((top, current) => 
+            current.wonValue > top.wonValue ? current : top
+          )
+        : null;
+
+      // Sort reps by won value (descending)
+      const sortedRepsStats = repsStats.sort((a, b) => b.wonValue - a.wonValue);
+
+      return {
+        overall: overallStats,
+        byRep: sortedRepsStats,
+        summary: {
+          totalReps: users.length,
+          topPerformer: topPerformer,
+          period: {
+            start: startDate || new Date(0),
+            end: endDate || new Date(),
+          },
+        },
+      };
+    } catch (error) {
+      this.logger.error('Error getting all reps win/loss stats:', error.stack);
+      throw error;
+    }
+  }
+
+  /**
    * Calculate win/loss statistics from outcomes array
    */
   private calculateWinLossStats(outcomes: any[], inProgressCount: number = 0): WinLossStats {
     const won = outcomes.filter(o => o.outcome === 'WON').length;
     const lost = outcomes.filter(o => o.outcome === 'LOST').length;
     const abandoned = outcomes.filter(o => o.outcome === 'ABANDONED').length;
+    const cancelled = outcomes.filter(o => o.outcome === 'CANCELLED').length;
     const inProgress = inProgressCount; // Use the count from GHL
 
-    const totalOpportunities = won + lost + abandoned + inProgress;
+    const totalOpportunities = won + lost + abandoned + cancelled + inProgress;
 
     const totalValue = outcomes.reduce((sum, o) => sum + (o.value || 0), 0);
     const wonValue = outcomes
@@ -414,6 +637,7 @@ export class OpportunityOutcomesService {
       won,
       lost,
       abandoned,
+      cancelled,
       inProgress,
       totalValue,
       wonValue,

@@ -1,5 +1,6 @@
 import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { DocuSealDocumentType } from '@prisma/client';
 import axios from 'axios';
 import * as FormData from 'form-data';
 import * as fs from 'fs';
@@ -226,11 +227,13 @@ export class DocuSealService {
 
       const requestBody = {
         template_id: parseInt(templateId, 10), // Ensure it's a proper integer
+        external_id: opportunityId, // Set external_id on submission for easier tracking
         submitters: signers.map(signer => ({
           name: signer.name,
           role: signer.role || "Signer1", // Use the role from signer or default to Signer1 (must match template)
           email: signer.email,
           send_email: true, // Ensure email is sent to customer (per submitter)
+          external_id: opportunityId, // Also set on each submitter
           ...(Object.keys(values).length > 0 ? { values } : {}) // Only include values if there are any
         })),
         send_email: true // Also at root level for backward compatibility
@@ -642,7 +645,8 @@ export class DocuSealService {
             })),
           },
         ],
-        external_id: opportunityId,
+        // Use a template-specific external_id to avoid collisions between different document types
+        external_id: `${templateName.replace(/\s+/g, '-').toLowerCase()}-${opportunityId}`,
       };
 
       this.logger.log(`Sending template creation request with ${fields.length} field(s)`);
@@ -1195,7 +1199,8 @@ export class DocuSealService {
             fields: allFields,
           },
         ],
-        external_id: opportunityId,
+        // Use a template-specific external_id to avoid collisions with other templates for the same opportunity
+        external_id: `contract-booking-${opportunityId}`,
       };
 
       this.logger.log(`Creating template with merged PDF (single document)`);
@@ -1978,7 +1983,7 @@ export class DocuSealService {
             })),
           },
           {
-            name: `Book Confirmation - ${contractData.customerName}`,
+            name: `Booking Confirmation - ${contractData.customerName}`,
             file: bookConfirmationBase64,
             fields: bookConfirmationSignatureFields.map(field => ({
               name: field.name,
@@ -1994,7 +1999,8 @@ export class DocuSealService {
             })),
           },
         ],
-        external_id: opportunityId,
+        // Distinct external_id for the combined contract+disclaimer+booking template
+        external_id: `complete-package-${opportunityId}`,
       };
 
       this.logger.log(`Creating template with 3 documents (contract, disclaimer, book confirmation)`);
@@ -2253,10 +2259,13 @@ export class DocuSealService {
             }),
           },
         ],
-        external_id: opportunityId,
+        // Use disclaimer-specific external_id to avoid sharing template with other document types
+        external_id: `disclaimer-${opportunityId}`,
       };
 
       this.logger.log(`Creating disclaimer template with ${disclaimerFields.length} fields`);
+      this.logger.log(`Template name being sent: "${requestBody.name}"`);
+      this.logger.log(`Document name being sent: "${requestBody.documents[0].name}"`);
 
       // Create template
       const response = await axios.post<DocuSealTemplate>(
@@ -2272,6 +2281,28 @@ export class DocuSealService {
 
       const templateId = response.data.id.toString();
       this.logger.log(`Disclaimer template created successfully with ID: ${templateId}`);
+      this.logger.log(`Template name returned from DocuSeal: "${response.data.name}"`);
+      
+      // Verify and update template name if DocuSeal returned a different name
+      if (response.data.name !== requestBody.name) {
+        this.logger.warn(`Template name mismatch! Sent: "${requestBody.name}", Received: "${response.data.name}". Updating template name...`);
+        try {
+          const updateResponse = await axios.patch(
+            this.getApiPath(`/templates/${templateId}`),
+            { name: requestBody.name },
+            {
+              headers: {
+                'X-Auth-Token': this.apiKey,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          this.logger.log(`Template name updated successfully: "${updateResponse.data.name}"`);
+        } catch (updateError: any) {
+          this.logger.error(`Failed to update template name: ${updateError.message}`);
+          // Don't throw - continue with the template even if name update fails
+        }
+      }
 
       // Prepare field values for pre-filling
       const fieldValues: Record<string, any> = {};
@@ -2374,6 +2405,263 @@ export class DocuSealService {
       };
     } catch (error) {
       this.logger.error(`Failed to create disclaimer signing workflow: ${error.message}`);
+      if (error.response) {
+        this.logger.error(`Response status: ${error.response.status}`);
+        this.logger.error(`Response data: ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Create a signing workflow for Express Consent only
+   * Sends express consent document to customer for signing
+   */
+  async createExpressConsentSigningWorkflow(
+    expressConsentPdfPath: string,
+    opportunityId: string,
+    customerData: {
+      name: string;
+      email: string;
+      address?: string;
+    },
+    customerName: string
+  ): Promise<{
+    templateId: string;
+    submissionId: string;
+    signingUrl: string;
+  }> {
+    try {
+      this.logger.log(`Creating express consent signing workflow for opportunity: ${opportunityId}`);
+
+      // Convert PDF to base64
+      const expressConsentBase64 = this.convertPdfToBase64(expressConsentPdfPath);
+
+      // Get current date for pre-filling
+      const currentDate = new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+
+      // Express Consent fields - exact coordinates from DocuSeal template
+      // All fields (Name, Address, Signatures, and Date) on page 2
+      const expressConsentFields = [
+        {
+          name: 'Name 1',
+          type: 'text' as const,
+          role: 'Signer1',
+          required: true,
+          areas: [
+            { page: 2, x: 0.27937449650913, y: 0.5531599990508732, w: 0.5616440655209451, h: 0.02371037395596054 },
+          ],
+        },
+        {
+          name: 'Name 2',
+          type: 'text' as const,
+          role: 'Signer1',
+          required: false,
+          areas: [
+            { page: 2, x: 0.2824835526315789, y: 0.5812956767274108, w: 0.5577755773361976, h: 0.0241760392938497 },
+          ],
+        },
+        {
+          name: 'Address',
+          type: 'text' as const,
+          role: 'Signer1',
+          required: true,
+          areas: [
+            { page: 2, x: 0.2799954685821697, y: 0.6220577069096431, w: 0.5524427698711063, h: 0.07953682611996959 },
+          ],
+        },
+        {
+          name: 'Signature 1',
+          type: 'signature' as const,
+          role: 'Signer1',
+          required: true,
+          areas: [
+            { page: 2, x: 0.2799073576799141, y: 0.7119726414198937, w: 0.2592096871643394, h: 0.06205509681093391 },
+          ],
+        },
+        {
+          name: 'Signature 2',
+          type: 'signature' as const,
+          role: 'Signer1',
+          required: true,
+          areas: [
+            { page: 2, x: 0.5455449449516648, y: 0.7137967444950646, w: 0.2953057867883996, h: 0.06279660212604399 },
+          ],
+        },
+        {
+          name: 'Date',
+          type: 'date' as const,
+          role: 'Signer1',
+          required: true,
+          areas: [
+            { page: 2, x: 0.2802514097744361, y: 0.7895459614654518, w: 0.5620049006444683, h: 0.02458535022779051 },
+          ],
+        },
+      ];
+
+      // Prepare request body with all fields
+      const requestBody = {
+        name: `Express Consent - ${customerName} - ${opportunityId}`,
+        documents: [
+          {
+            name: `Express Consent - ${customerName}`,
+            file: expressConsentBase64,
+            fields: expressConsentFields.map(field => {
+              const fieldObj: any = {
+                name: field.name,
+                type: field.type,
+                role: field.role,
+                required: field.required,
+                areas: field.areas.map(area => ({
+                  page: area.page,
+                  x: area.x,
+                  y: area.y,
+                  w: area.w,
+                  h: area.h,
+                })),
+              };
+
+              // Add date format preference for date fields
+              if (field.type === 'date') {
+                fieldObj.preferences = {
+                  format: 'DD/MM/YYYY',
+                };
+              }
+              
+              return fieldObj;
+            }),
+          },
+        ],
+        // Use express-consent-specific external_id to avoid sharing template with other document types
+        external_id: `express-consent-${opportunityId}`,
+      };
+
+      this.logger.log(`Creating express consent template with ${expressConsentFields.length} fields`);
+      this.logger.log(`Template name being sent: "${requestBody.name}"`);
+      this.logger.log(`Document name being sent: "${requestBody.documents[0].name}"`);
+
+      // Create template
+      const response = await axios.post<DocuSealTemplate>(
+        this.getApiPath('/templates/pdf'),
+        requestBody,
+        {
+          headers: {
+            'X-Auth-Token': this.apiKey,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const templateId = response.data.id.toString();
+      this.logger.log(`Express consent template created successfully with ID: ${templateId}`);
+      this.logger.log(`Template name returned from DocuSeal: "${response.data.name}"`);
+      
+      // Verify and update template name if DocuSeal returned a different name
+      if (response.data.name !== requestBody.name) {
+        this.logger.warn(`Template name mismatch! Sent: "${requestBody.name}", Received: "${response.data.name}". Updating template name...`);
+        try {
+          const updateResponse = await axios.patch(
+            this.getApiPath(`/templates/${templateId}`),
+            { name: requestBody.name },
+            {
+              headers: {
+                'X-Auth-Token': this.apiKey,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          this.logger.log(`Template name updated successfully: "${updateResponse.data.name}"`);
+        } catch (updateError: any) {
+          this.logger.error(`Failed to update template name: ${updateError.message}`);
+          // Don't throw - continue with the template even if name update fails
+        }
+      }
+
+      // Prepare field values for pre-filling
+      const fieldValues: Record<string, any> = {};
+      
+      // Auto-fill customer name (Name 1 field)
+      if (customerName) {
+        fieldValues['Name 1'] = customerName;
+      }
+      
+      // Auto-fill address if provided
+      if (customerData.address) {
+        fieldValues['Address'] = customerData.address;
+      }
+      
+      // Auto-fill date
+      fieldValues['Date'] = currentDate;
+
+      // Create submission and send email with pre-filled field values
+      this.logger.log(`Creating submission and sending email to ${customerData.email}`);
+      const submitters = await this.createSubmissionFromTemplate(
+        templateId,
+        `Express Consent - ${customerName}`,
+        [
+          {
+            email: customerData.email,
+            name: customerData.name,
+            role: 'Signer1',
+          },
+        ],
+        opportunityId,
+        fieldValues
+      );
+
+      if (!submitters || submitters.length === 0) {
+        throw new Error('No submitters returned from submission creation');
+      }
+
+      const firstSubmitter = submitters[0];
+      
+      // Build signing URL
+      let signingUrl: string;
+      if ((firstSubmitter as any)?.embed_src) {
+        signingUrl = (firstSubmitter as any).embed_src;
+      } else if (firstSubmitter.slug) {
+        signingUrl = `${this.baseUrl}/s/${firstSubmitter.slug}`;
+      } else if (firstSubmitter.uuid) {
+        signingUrl = `${this.baseUrl}/s/${firstSubmitter.uuid}`;
+      } else {
+        signingUrl = 'Email sent to customer';
+      }
+
+      const submissionId = firstSubmitter.submission_id?.toString() || 'unknown';
+
+      // Save submission ID to database for tracking
+      try {
+        await this.saveSubmissionToDatabase(
+          opportunityId,
+          'EXPRESS_CONSENT' as DocuSealDocumentType,
+          templateId,
+          submissionId,
+          signingUrl,
+          customerName,
+          customerData.email
+        );
+        this.logger.log(`Saved express consent submission to database: ${submissionId}`);
+      } catch (dbError) {
+        this.logger.warn(`Failed to save submission to database: ${dbError.message}. Continuing anyway.`);
+      }
+
+      this.logger.log(`Express consent signing workflow created successfully for opportunity: ${opportunityId}`);
+      this.logger.log(`Email sent to: ${customerData.email}`);
+      this.logger.log(`Template ID: ${templateId}`);
+      this.logger.log(`Submission ID: ${submissionId}`);
+      this.logger.log(`Signing URL: ${signingUrl}`);
+
+      return {
+        templateId,
+        submissionId,
+        signingUrl,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to create express consent signing workflow: ${error.message}`);
       if (error.response) {
         this.logger.error(`Response status: ${error.response.status}`);
         this.logger.error(`Response data: ${JSON.stringify(error.response.data)}`);
@@ -2574,7 +2862,8 @@ export class DocuSealService {
             }),
           },
         ],
-        external_id: opportunityId,
+        // Use disclaimer-specific external_id to avoid sharing template with other document types
+        external_id: `disclaimer-${opportunityId}`,
       };
 
       // 5. Log API key preview for debugging
@@ -2812,10 +3101,13 @@ export class DocuSealService {
             }),
           },
         ],
-        external_id: opportunityId,
+        // Use booking-confirmation-specific external_id to avoid sharing template with other document types
+        external_id: `booking-confirmation-${opportunityId}`,
       };
 
       this.logger.log(`Creating booking confirmation template`);
+      this.logger.log(`Template name being sent: "${requestBody.name}"`);
+      this.logger.log(`Document name being sent: "${requestBody.documents[0].name}"`);
 
       // Create template
       const response = await axios.post<DocuSealTemplate>(
@@ -2831,6 +3123,28 @@ export class DocuSealService {
 
       const templateId = response.data.id.toString();
       this.logger.log(`Booking confirmation template created successfully with ID: ${templateId}`);
+      this.logger.log(`Template name returned from DocuSeal: "${response.data.name}"`);
+      
+      // Verify and update template name if DocuSeal returned a different name
+      if (response.data.name !== requestBody.name) {
+        this.logger.warn(`Template name mismatch! Sent: "${requestBody.name}", Received: "${response.data.name}". Updating template name...`);
+        try {
+          const updateResponse = await axios.patch(
+            this.getApiPath(`/templates/${templateId}`),
+            { name: requestBody.name },
+            {
+              headers: {
+                'X-Auth-Token': this.apiKey,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          this.logger.log(`Template name updated successfully: "${updateResponse.data.name}"`);
+        } catch (updateError: any) {
+          this.logger.error(`Failed to update template name: ${updateError.message}`);
+          // Don't throw - continue with the template even if name update fails
+        }
+      }
 
       // Get current date for pre-filling
       const currentDate = new Date().toLocaleDateString('en-GB', {
@@ -2920,7 +3234,7 @@ export class DocuSealService {
    */
   private async saveSubmissionToDatabase(
     opportunityId: string,
-    documentType: 'CONTRACT' | 'DISCLAIMER' | 'BOOKING_CONFIRMATION',
+    documentType: DocuSealDocumentType,
     templateId: string,
     submissionId: string,
     signingUrl: string,
@@ -2995,13 +3309,168 @@ export class DocuSealService {
       }
 
       // Find the submission by submissionId (not unique, so use findFirst)
-      const dbSubmission = await this.prisma.docuSealSubmission.findFirst({
+      let dbSubmission = await this.prisma.docuSealSubmission.findFirst({
         where: { submissionId },
       });
 
       if (!dbSubmission) {
-        this.logger.warn(`Submission ${submissionId} not found in database, skipping sync`);
-        return;
+        // Try to create the submission if it doesn't exist
+        // Get template info to determine document type and opportunityId
+        try {
+          let opportunityId: string | null = null;
+          let template: any = null;
+          let templateName = '';
+          
+          // Try to get template info if template_id exists
+          if (docuSealSubmission.template_id) {
+            try {
+              template = await this.getTemplate(docuSealSubmission.template_id.toString());
+              templateName = template?.name?.toLowerCase() || '';
+              this.logger.log(`Retrieved template ${docuSealSubmission.template_id}: name="${template?.name}", external_id="${template?.external_id}"`);
+            } catch (templateError) {
+              this.logger.warn(`Failed to get template ${docuSealSubmission.template_id}: ${templateError.message}`);
+            }
+          } else {
+            this.logger.warn(`Submission ${submissionId} has no template_id`);
+          }
+          
+          // 1. Try to extract opportunityId from template (external_id or name)
+          if (template) {
+            this.logger.log(`Attempting to extract opportunityId from template. Name: "${template.name}", external_id: "${template.external_id}"`);
+            const extractedFromTemplate = this.extractOpportunityIdFromTemplate(template);
+            if (extractedFromTemplate) {
+              opportunityId = extractedFromTemplate;
+              this.logger.log(`Found opportunityId from template: ${opportunityId}`);
+            }
+          }
+          
+          // 3. Try to get from submission's external_id (if we set it when creating)
+          // Check the submission response data structure
+          if (!opportunityId && (docuSealSubmission as any).external_id) {
+            opportunityId = (docuSealSubmission as any).external_id;
+            this.logger.log(`Found opportunityId from submission external_id: ${opportunityId}`);
+          }
+          
+          // 4. Try to get from submission submitters' external_id
+          if (!opportunityId) {
+            const firstSubmitter = docuSealSubmission.submitters?.[0] || docuSealSubmission.signers?.[0];
+            // Check if submitter has external_id in the response
+            if ((firstSubmitter as any)?.external_id) {
+              opportunityId = (firstSubmitter as any).external_id;
+              this.logger.log(`Found opportunityId from submitter external_id in response: ${opportunityId}`);
+            } else {
+              // Try to get full submitter details from API
+              try {
+                const submittersResponse = await axios.get(
+                  this.getApiPath(`/submissions/${submissionId}/submitters`),
+                  {
+                    headers: {
+                      'X-Auth-Token': this.apiKey,
+                    },
+                  }
+                );
+                const submitters = submittersResponse.data?.submitters || submittersResponse.data || [];
+                const submitterWithExternalId = submitters.find((s: any) => s.external_id);
+                if (submitterWithExternalId?.external_id) {
+                  opportunityId = submitterWithExternalId.external_id;
+                  this.logger.log(`Found opportunityId from submitter external_id via API: ${opportunityId}`);
+                }
+              } catch (submitterError) {
+                this.logger.debug(`Could not fetch submitter details: ${submitterError.message}`);
+              }
+            }
+          }
+          
+          // 5. Last resort: Try to extract from submission name or any other field
+          if (!opportunityId) {
+            // Check if submission has a name field we can parse
+            const submissionName = (docuSealSubmission as any).name;
+            if (submissionName) {
+              this.logger.log(`Trying to extract opportunityId from submission name: "${submissionName}"`);
+              const extracted = this.extractOpportunityIdFromTemplate({ name: submissionName });
+              if (extracted) {
+                opportunityId = extracted;
+                this.logger.log(`Found opportunityId from submission name: ${opportunityId}`);
+              }
+            }
+          }
+          
+          // Determine document type from template name or submission data
+          // Check for full phrases first to avoid misclassification
+          let documentType: DocuSealDocumentType = 'CONTRACT';
+          const nameToCheck = templateName || (docuSealSubmission as any).name?.toLowerCase() || '';
+          if (nameToCheck.includes('disclaimer') || nameToCheck.includes('epvs')) {
+            documentType = 'DISCLAIMER';
+          } else if (nameToCheck.includes('express consent') || (nameToCheck.includes('express') && nameToCheck.includes('consent'))) {
+            documentType = 'EXPRESS_CONSENT';
+          } else if (nameToCheck.includes('booking confirmation') || (nameToCheck.includes('booking') && nameToCheck.includes('confirmation'))) {
+            documentType = 'BOOKING_CONFIRMATION';
+          } else if (nameToCheck.includes('booking') || nameToCheck.includes('confirmation')) {
+            documentType = 'BOOKING_CONFIRMATION';
+          } else if (nameToCheck.includes('express') || nameToCheck.includes('consent')) {
+            documentType = 'EXPRESS_CONSENT';
+          }
+          
+          // Get customer info from submitters
+          const firstSubmitter = docuSealSubmission.submitters?.[0] || docuSealSubmission.signers?.[0];
+          const customerName = firstSubmitter?.name || 'Customer';
+          const customerEmail = firstSubmitter?.email || '';
+          
+          // Get signing URL from first submitter
+          let signingUrl: string | undefined;
+          if (firstSubmitter?.slug) {
+            signingUrl = `${this.baseUrl}/s/${firstSubmitter.slug}`;
+          }
+          
+          if (opportunityId) {
+            this.logger.log(`Creating or updating submission ${submissionId} in database for opportunity ${opportunityId}`);
+            
+            // Upsert the submission in database (handles unique constraint on opportunityId + documentType)
+            dbSubmission = await this.prisma.docuSealSubmission.upsert({
+              where: {
+                opportunityId_documentType: {
+                  opportunityId,
+                  documentType,
+                },
+              },
+              update: {
+                templateId: docuSealSubmission.template_id?.toString() || '',
+                submissionId,
+                signingUrl,
+                status: dbStatus,
+                signedDocumentUrl: signedDocumentUrl || undefined,
+                customerName,
+                customerEmail,
+                completedAt: dbStatus === 'completed' && docuSealSubmission.completed_at 
+                  ? new Date(docuSealSubmission.completed_at) 
+                  : undefined,
+                updatedAt: new Date(),
+              },
+              create: {
+                opportunityId,
+                documentType,
+                templateId: docuSealSubmission.template_id?.toString() || '',
+                submissionId,
+                signingUrl,
+                status: dbStatus,
+                signedDocumentUrl: signedDocumentUrl || undefined,
+                customerName,
+                customerEmail,
+                completedAt: dbStatus === 'completed' && docuSealSubmission.completed_at 
+                  ? new Date(docuSealSubmission.completed_at) 
+                  : undefined,
+              },
+            });
+            
+            this.logger.log(`Upserted submission ${submissionId} in database`);
+          } else {
+            this.logger.warn(`Submission ${submissionId} not found in database and cannot determine opportunityId, skipping sync`);
+            return;
+          }
+        } catch (createError) {
+          this.logger.warn(`Submission ${submissionId} not found in database and failed to create: ${createError.message}, skipping sync`);
+          return;
+        }
       }
 
       // Check if status changed to completed (wasn't completed before)
@@ -3092,7 +3561,7 @@ export class DocuSealService {
    */
   async updateSubmissionStatus(
     opportunityId: string,
-    documentType: 'CONTRACT' | 'DISCLAIMER' | 'BOOKING_CONFIRMATION',
+    documentType: 'CONTRACT' | 'DISCLAIMER' | 'BOOKING_CONFIRMATION' | 'EXPRESS_CONSENT',
     status: string,
     signedDocumentUrl?: string
   ): Promise<void> {
@@ -3209,11 +3678,17 @@ export class DocuSealService {
     try {
       // First try external_id
       if (template.external_id) {
-        // external_id might be in format like "template-{opportunityId}" or just "{opportunityId}"
-        const match = template.external_id.match(/(?:template-)?([A-Za-z0-9_-]+)/);
-        if (match && match[1]) {
-          this.logger.debug(`Extracted opportunity ID from external_id: ${match[1]}`);
-          return match[1];
+        // external_id might be in format like:
+        // - "{opportunityId}"
+        // - "template-{opportunityId}"
+        // - "booking-confirmation-{opportunityId}"
+        // - "express-consent-{opportunityId}"
+        // - "disclaimer-{opportunityId}"
+        const parts = template.external_id.split('-');
+        const candidate = parts[parts.length - 1];
+        if (candidate && /^[A-Za-z0-9_-]+$/.test(candidate)) {
+          this.logger.debug(`Extracted opportunity ID from external_id: ${candidate}`);
+          return candidate;
         }
       }
 
@@ -3323,12 +3798,19 @@ export class DocuSealService {
               const template = await this.getTemplate(dbSubmission.templateId);
               
               // Determine document type from template name
-              let documentType: 'CONTRACT' | 'DISCLAIMER' | 'BOOKING_CONFIRMATION' = dbSubmission.documentType;
+              // Check for full phrases first to avoid misclassification
+              let documentType: 'CONTRACT' | 'DISCLAIMER' | 'BOOKING_CONFIRMATION' | 'EXPRESS_CONSENT' = dbSubmission.documentType;
               const templateName = template.name?.toLowerCase() || '';
               if (templateName.includes('disclaimer') || templateName.includes('epvs')) {
                 documentType = 'DISCLAIMER';
+              } else if (templateName.includes('express consent') || (templateName.includes('express') && templateName.includes('consent'))) {
+                documentType = 'EXPRESS_CONSENT';
+              } else if (templateName.includes('booking confirmation') || (templateName.includes('booking') && templateName.includes('confirmation'))) {
+                documentType = 'BOOKING_CONFIRMATION';
               } else if (templateName.includes('booking') || templateName.includes('confirmation')) {
                 documentType = 'BOOKING_CONFIRMATION';
+              } else if (templateName.includes('express') || templateName.includes('consent')) {
+                documentType = 'EXPRESS_CONSENT';
               }
 
               // Download signed document
@@ -3432,12 +3914,19 @@ export class DocuSealService {
             this.logger.log(`📄 Processing completed submission ${submission.id} for opportunity ${opportunityId}`);
 
             // Determine document type from template name
-            let documentType: 'CONTRACT' | 'DISCLAIMER' | 'BOOKING_CONFIRMATION' = 'CONTRACT';
+            // Check for full phrases first to avoid misclassification
+            let documentType: 'CONTRACT' | 'DISCLAIMER' | 'BOOKING_CONFIRMATION' | 'EXPRESS_CONSENT' = 'CONTRACT';
             const templateName = template.name?.toLowerCase() || '';
             if (templateName.includes('disclaimer') || templateName.includes('epvs')) {
               documentType = 'DISCLAIMER';
+            } else if (templateName.includes('express consent') || (templateName.includes('express') && templateName.includes('consent'))) {
+              documentType = 'EXPRESS_CONSENT';
+            } else if (templateName.includes('booking confirmation') || (templateName.includes('booking') && templateName.includes('confirmation'))) {
+              documentType = 'BOOKING_CONFIRMATION';
             } else if (templateName.includes('booking') || templateName.includes('confirmation')) {
               documentType = 'BOOKING_CONFIRMATION';
+            } else if (templateName.includes('express') || templateName.includes('consent')) {
+              documentType = 'EXPRESS_CONSENT';
             }
 
             // Download signed document
@@ -3595,14 +4084,24 @@ export class DocuSealService {
       this.logger.log(`🔄 Processing webhook event: ${eventType} for submission: ${submissionId}`);
 
       // Extract opportunity ID from template external_id if available
-      // Format: "template-{opportunityId}" or just "{opportunityId}"
+      // external_id might be in format like:
+      // - "{opportunityId}"
+      // - "template-{opportunityId}"
+      // - "booking-confirmation-{opportunityId}"
+      // - "express-consent-{opportunityId}"
+      // - "disclaimer-{opportunityId}"
       const templateExternalId = payload.data?.template?.external_id || payload.template?.external_id;
       let opportunityId: string | null = null;
       
       if (templateExternalId) {
-        // Remove "template-" prefix if present
-        opportunityId = templateExternalId.replace(/^template-/, '');
-        this.logger.log(`📋 Extracted opportunity ID from template external_id: ${opportunityId}`);
+        const externalTemplate = { external_id: templateExternalId };
+        const extractedFromExternalId = this.extractOpportunityIdFromTemplate(externalTemplate);
+        if (extractedFromExternalId) {
+          opportunityId = extractedFromExternalId;
+          this.logger.log(`📋 Extracted opportunity ID from template external_id: ${opportunityId}`);
+        } else {
+          this.logger.warn(`⚠️ Could not extract opportunity ID from template external_id: ${templateExternalId}`);
+        }
       }
 
       // Find the submission in database
@@ -3765,7 +4264,7 @@ export class DocuSealService {
           this.logger.log(`❌ Submission ${submissionId} declined - updating status`);
           await this.updateSubmissionStatus(
             dbSubmission.opportunityId,
-            dbSubmission.documentType as 'CONTRACT' | 'DISCLAIMER' | 'BOOKING_CONFIRMATION',
+            dbSubmission.documentType as 'CONTRACT' | 'DISCLAIMER' | 'BOOKING_CONFIRMATION' | 'EXPRESS_CONSENT',
             'declined'
           );
           break;
@@ -3774,7 +4273,7 @@ export class DocuSealService {
           this.logger.log(`⏰ Submission ${submissionId} expired - updating status`);
           await this.updateSubmissionStatus(
             dbSubmission.opportunityId,
-            dbSubmission.documentType as 'CONTRACT' | 'DISCLAIMER' | 'BOOKING_CONFIRMATION',
+            dbSubmission.documentType as 'CONTRACT' | 'DISCLAIMER' | 'BOOKING_CONFIRMATION' | 'EXPRESS_CONSENT',
             'expired'
           );
           break;

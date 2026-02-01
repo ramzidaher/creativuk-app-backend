@@ -1,0 +1,93 @@
+{
+  "timestamp": "2026-01-18T20:16:16.561Z",
+  "tables": {
+    "users": {
+      "exists": true,
+      "count": 17
+    },
+    "appointments": {
+      "exists": true,
+      "count": 0
+    },
+    "surveys": {
+      "exists": true,
+      "count": 160
+    },
+    "opportunityProgress": {
+      "exists": true,
+      "count": 156
+    },
+    "opportunitySteps": {
+      "exists": true,
+      "count": 1865
+    },
+    "opportunityOutcomes": {
+      "exists": true,
+      "count": 83
+    },
+    "autoSaves": {
+      "exists": true,
+      "count": 0
+    },
+    "calculatorProgress": {
+      "exists": true,
+      "count": 180
+    },
+    "surveyImages": {
+      "exists": true,
+      "count": 3851
+    },
+    "signatures": {
+      "exists": true,
+      "count": 0
+    },
+    "openSolarProjects": {
+      "exists": true,
+      "count": 198
+    },
+    "docuSealSubmissions": {
+      "exists": true,
+      "count": 113
+    },
+    "systemSettings": {
+      "exists": true,
+      "count": 1
+    },
+    "forms": {
+      "exists": false,
+      "count": 0
+    },
+    "formFields": {
+      "exists": false,
+      "count": 0
+    },
+    "formSubmissions": {
+      "exists": false,
+      "count": 0
+    },
+    "formSubmissionFields": {
+      "exists": false,
+      "count": 0
+    },
+    "formSubmissionImages": {
+      "exists": false,
+      "count": 0
+    }
+  },
+  "allTables": [
+    "Appointment",
+    "AutoSave",
+    "CalculatorProgress",
+    "DocuSealSubmission",
+    "OpenSolarProject",
+    "OpportunityOutcome",
+    "OpportunityProgress",
+    "OpportunityStep",
+    "Signature",
+    "Survey",
+    "SurveyImage",
+    "SystemSettings",
+    "User",
+    "_prisma_migrations"
+  ]
+}

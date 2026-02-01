@@ -22,6 +22,7 @@
     "performance:test": "ts-node src/scripts/performance-test.ts",
     "performance:compare": "ts-node src/scripts/performance-comparison.ts",
     "create:test-admin": "ts-node src/scripts/create-test-admin.ts",
+    "track:ghl-latency": "ts-node src/scripts/track-ghl-api-latency.ts",
     "setup:email": "node setup-email.js",
     "test:email": "node test-email.js",
     "clear:excel": "node clear-excel-cells.js",
