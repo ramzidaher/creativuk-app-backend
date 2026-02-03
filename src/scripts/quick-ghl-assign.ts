@@ -4,7 +4,7 @@ import axios from 'axios';
 const prisma = new PrismaClient();
 
 // GHL API configuration - Updated to use the correct v1 API endpoint
-const GHL_BASE_URL = 'https://rest.gohighlevel.com/v1';
+const GHL_BASE_URL = 'https://services.leadconnectorhq.com';
 
 interface GHLUser {
   id: string;
@@ -22,6 +22,7 @@ async function getAllGHLUsers(accessToken: string, locationId: string): Promise<
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        Version: '2021-07-28',
       },
       params: {
         locationId: locationId,

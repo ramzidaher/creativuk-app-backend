@@ -67,11 +67,12 @@ cp .env.example .env
    - `PORT`: Server port (default: 3000)
 
    **GoHighLevel Integration:**
-   - `GHL_CLIENT_ID`: GoHighLevel OAuth client ID
-   - `GHL_CLIENT_SECRET`: GoHighLevel OAuth client secret
-   - `GHL_ACCESS_TOKEN`: GoHighLevel access token (optional, for direct API access)
-   - `GHL_LOCATION_ID`: GoHighLevel location ID
-   - `GHL_REDIRECT_URI`: OAuth redirect URI
+   - `GOHIGHLEVEL_API_TOKEN`: Private Integration token (v2, recommended for internal use)
+   - `GHL_LOCATION_ID`: GoHighLevel location (sub-account) ID
+   - `GHL_CLIENT_ID`: GoHighLevel OAuth client ID (optional, OAuth flow)
+   - `GHL_CLIENT_SECRET`: GoHighLevel OAuth client secret (optional, OAuth flow)
+   - `GHL_REDIRECT_URI`: OAuth redirect URI (optional, OAuth flow)
+   - `GHL_ACCESS_TOKEN`: Legacy access token (v1, avoid for new setups)
 
    **Email Configuration:**
    - `SMTP_HOST`: SMTP server host (e.g., `smtp.gmail.com`)

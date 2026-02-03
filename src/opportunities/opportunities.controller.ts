@@ -173,8 +173,8 @@ export class OpportunitiesController {
       }
 
       // Get opportunities from AI and Manual stages
-      const aiStageId = '8904bbe1-53a3-468e-94e4-f13cb04a4947'; // (AI Bot) Home Survey Booked
-      const manualStageId = '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c'; // (Manual) Home Survey Booked
+      const aiStageId = '77740d71-fd7e-47df-a9de-a7f1e4db0b87'; // (AI Bot) Home Survey Booked
+      const manualStageId = '08f2f487-14c5-44ef-b2f7-0021c605efb2'; // (Manual) Home Survey Booked
       
       const allOpportunities = await this.goHighLevelService.getOpportunitiesByStages(
         credentials.accessToken,
@@ -294,7 +294,7 @@ export class OpportunitiesController {
       const allOpportunities = await this.goHighLevelService.getOpportunitiesByStages(
         credentials.accessToken,
         credentials.locationId,
-        ['8904bbe1-53a3-468e-94e4-f13cb04a4947', '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c']
+        ['77740d71-fd7e-47df-a9de-a7f1e4db0b87', '08f2f487-14c5-44ef-b2f7-0021c605efb2']
       );
 
       const opportunity = allOpportunities.find(opp => opp.id === opportunityId);

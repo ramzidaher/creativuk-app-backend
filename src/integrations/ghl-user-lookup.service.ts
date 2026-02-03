@@ -18,7 +18,7 @@ export interface GHLUserLookupResult {
 @Injectable()
 export class GHLUserLookupService {
   private readonly logger = new Logger(GHLUserLookupService.name);
-  private readonly GHL_BASE_URL = 'https://rest.gohighlevel.com/v1';
+  private readonly GHL_BASE_URL = 'https://services.leadconnectorhq.com';
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -54,6 +54,7 @@ export class GHLUserLookupService {
           Authorization: `Bearer ${credentials.accessToken}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          Version: '2021-07-28',
         },
         params: {
           locationId: credentials.locationId,
