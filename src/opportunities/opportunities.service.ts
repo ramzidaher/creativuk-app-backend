@@ -104,8 +104,8 @@ export class OpportunitiesService {
       this.logger.log(`🔍 MAIN OPPORTUNITIES: Starting analysis for user: ${user.name} (${user.role})`);
 
       // Get opportunities from AI and Manual stages
-      const aiStageId = '8904bbe1-53a3-468e-94e4-f13cb04a4947'; // (AI Bot) Home Survey Booked
-      const manualStageId = '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c'; // (Manual) Home Survey Booked
+      const aiStageId = '77740d71-fd7e-47df-a9de-a7f1e4db0b87'; // (AI Bot) Home Survey Booked
+      const manualStageId = '08f2f487-14c5-44ef-b2f7-0021c605efb2'; // (Manual) Home Survey Booked
       
       const allOpportunities = await this.goHighLevelService.getOpportunitiesByStages(
         credentials.accessToken,
@@ -269,8 +269,8 @@ export class OpportunitiesService {
       this.logger.log(`Using GHL v1 API credentials for locationId: ${credentials.locationId}`);
       
       // Define the specific stage IDs we want
-      const aiStageId = '8904bbe1-53a3-468e-94e4-f13cb04a4947'; // (AI Bot) Home Survey Booked
-      const manualStageId = '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c'; // (Manual) Home Survey Booked
+      const aiStageId = '77740d71-fd7e-47df-a9de-a7f1e4db0b87'; // (AI Bot) Home Survey Booked
+      const manualStageId = '08f2f487-14c5-44ef-b2f7-0021c605efb2'; // (Manual) Home Survey Booked
       
       this.logger.log(`Fetching opportunities for AI stage: ${aiStageId}`);
       this.logger.log(`Fetching opportunities for Manual stage: ${manualStageId}`);
@@ -695,8 +695,8 @@ export class OpportunitiesService {
       this.logger.log(`Found ${filteredOpportunities.length} opportunities with appointments assigned to ${teamMemberName}`);
       
       // Apply the same AI/Manual filtering as before
-      const aiStageId = '8904bbe1-53a3-468e-94e4-f13cb04a4947'; // (AI Bot) Home Survey Booked
-      const manualStageId = '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c'; // (Manual) Home Survey Booked
+      const aiStageId = '77740d71-fd7e-47df-a9de-a7f1e4db0b87'; // (AI Bot) Home Survey Booked
+      const manualStageId = '08f2f487-14c5-44ef-b2f7-0021c605efb2'; // (Manual) Home Survey Booked
       
       const aiOpportunities = filteredOpportunities.filter(opp => opp.pipelineStageId === aiStageId);
       const manualOpportunities = filteredOpportunities.filter(opp => opp.pipelineStageId === manualStageId);
@@ -751,8 +751,8 @@ export class OpportunitiesService {
       this.logger.log(`🔍 ACCURATE APPOINTMENT MATCHING: Starting analysis for user: ${user.name} (${user.role})`);
 
       // Get opportunities from AI and Manual stages
-      const aiStageId = '8904bbe1-53a3-468e-94e4-f13cb04a4947'; // (AI Bot) Home Survey Booked
-      const manualStageId = '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c'; // (Manual) Home Survey Booked
+      const aiStageId = '77740d71-fd7e-47df-a9de-a7f1e4db0b87'; // (AI Bot) Home Survey Booked
+      const manualStageId = '08f2f487-14c5-44ef-b2f7-0021c605efb2'; // (Manual) Home Survey Booked
       
       const allOpportunities = await this.goHighLevelService.getOpportunitiesByStages(
         credentials.accessToken,
@@ -838,8 +838,8 @@ export class OpportunitiesService {
       this.logger.log(`🚀 OPTIMIZED APPOINTMENT MATCHING: Starting analysis for user: ${user.name} (${user.role})`);
 
       // Get opportunities from AI and Manual stages
-      const aiStageId = '8904bbe1-53a3-468e-94e4-f13cb04a4947'; // (AI Bot) Home Survey Booked
-      const manualStageId = '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c'; // (Manual) Home Survey Booked
+      const aiStageId = '77740d71-fd7e-47df-a9de-a7f1e4db0b87'; // (AI Bot) Home Survey Booked
+      const manualStageId = '08f2f487-14c5-44ef-b2f7-0021c605efb2'; // (Manual) Home Survey Booked
       
       const allOpportunities = await this.goHighLevelService.getOpportunitiesByStages(
         credentials.accessToken,
@@ -1207,7 +1207,7 @@ export class OpportunitiesService {
             } : null,
             appointmentCount: analysis.validAppointmentCount,
             classification: 'CONFIRMED',
-            type: opportunity.pipelineStageId === '8904bbe1-53a3-468e-94e4-f13cb04a4947' ? 'ai' : 'manual'
+            type: opportunity.pipelineStageId === '77740d71-fd7e-47df-a9de-a7f1e4db0b87' ? 'ai' : 'manual'
           });
           break;
 
@@ -1225,7 +1225,7 @@ export class OpportunitiesService {
             } : null,
             appointmentCount: analysis.validAppointmentCount,
             classification: 'MULTIPLE',
-            type: opportunity.pipelineStageId === '8904bbe1-53a3-468e-94e4-f13cb04a4947' ? 'ai' : 'manual'
+            type: opportunity.pipelineStageId === '77740d71-fd7e-47df-a9de-a7f1e4db0b87' ? 'ai' : 'manual'
           });
           break;
 
@@ -1240,7 +1240,7 @@ export class OpportunitiesService {
             appointmentCount: 0,
             classification: 'NO_APPOINTMENT',
             reason: analysis.reason,
-            type: opportunity.pipelineStageId === '8904bbe1-53a3-468e-94e4-f13cb04a4947' ? 'ai' : 'manual'
+            type: opportunity.pipelineStageId === '77740d71-fd7e-47df-a9de-a7f1e4db0b87' ? 'ai' : 'manual'
           });
           break;
       }
@@ -1353,7 +1353,7 @@ export class OpportunitiesService {
         ...opportunity,
         ...appointmentInfo,
         // Add type field based on pipeline stage
-        type: opportunity.pipelineStageId === '8904bbe1-53a3-468e-94e4-f13cb04a4947' ? 'ai' : 'manual'
+        type: opportunity.pipelineStageId === '77740d71-fd7e-47df-a9de-a7f1e4db0b87' ? 'ai' : 'manual'
       };
     });
 
@@ -2018,10 +2018,10 @@ export class OpportunitiesService {
       this.logger.log(`🎯 CONFIRMED OPPORTUNITIES FETCH: Starting for user: ${user.name} (${user.role})`);
 
       // Get opportunities from all 4 stages: AI Bot and Manual Home Survey Booked stages, plus Online Quotes stages
-      const aiStageId = '8904bbe1-53a3-468e-94e4-f13cb04a4947'; // (AI Bot) Home Survey Booked
-      const manualStageId = '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c'; // (Manual) Home Survey Booked
-      const additionalStageId = '69b91b0e-b23d-4d7e-9a15-6bcbf0d05b9b'; // Manual Online Quotes
-      const additionalStageId2 = '1bb0bbae-97ca-42ca-b10e-f32097fb189d'; // AI Bot Online Quotes
+      const aiStageId = '77740d71-fd7e-47df-a9de-a7f1e4db0b87'; // (AI Bot) Home Survey Booked
+      const manualStageId = '08f2f487-14c5-44ef-b2f7-0021c605efb2'; // (Manual) Home Survey Booked
+      const additionalStageId = 'eb68e8e6-261c-4b19-9122-6b2b075c1edb'; // Manual Online Quotes
+      const additionalStageId2 = 'f501ab7b-bcaa-4341-a448-9f3cc598baab'; // AI Bot Online Quotes
       
       this.logger.log(`📋 Fetching opportunities from 4 stages:`);
       this.logger.log(`   1. AI Bot Home Survey Booked: ${aiStageId}`);
@@ -2176,7 +2176,7 @@ export class OpportunitiesService {
               this.logger.log(`✅ Found appointment details for ${opportunity.name}: ${appointmentDetails.rawText}`);
               return {
                 ...opportunity,
-                type: opportunity.pipelineStageId === '8904bbe1-53a3-468e-94e4-f13cb04a4947' ? 'ai' : 'manual',
+                type: opportunity.pipelineStageId === '77740d71-fd7e-47df-a9de-a7f1e4db0b87' ? 'ai' : 'manual',
                 hasAppointment: true,
                 appointmentDetails: {
                   ...appointmentDetails,
@@ -2190,7 +2190,7 @@ export class OpportunitiesService {
               this.logger.log(`✅ Found appointment tag for ${opportunity.name} but no valid date in notes`);
               return {
                 ...opportunity,
-                type: opportunity.pipelineStageId === '8904bbe1-53a3-468e-94e4-f13cb04a4947' ? 'ai' : 'manual',
+                type: opportunity.pipelineStageId === '77740d71-fd7e-47df-a9de-a7f1e4db0b87' ? 'ai' : 'manual',
                 hasAppointment: true,
                 appointmentDetails: {
                   date: null,
@@ -2295,7 +2295,7 @@ export class OpportunitiesService {
           // Return enhanced opportunity
           return {
             ...opportunity,
-            type: opportunity.pipelineStageId === '8904bbe1-53a3-468e-94e4-f13cb04a4947' ? 'ai' : 'manual',
+            type: opportunity.pipelineStageId === '77740d71-fd7e-47df-a9de-a7f1e4db0b87' ? 'ai' : 'manual',
             hasAppointment: true,
             appointmentDetails: appointmentDetails || defaultAppointmentDetails,
             classification: appointmentDetails ? 'CONFIRMED' : 'TAGGED'
@@ -2782,8 +2782,8 @@ export class OpportunitiesService {
       }
 
       // Get ALL opportunities from the stages (same as working endpoints)
-      const aiStageId = '8904bbe1-53a3-468e-94e4-f13cb04a4947'; // (AI Bot) Home Survey Booked
-      const manualStageId = '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c'; // (Manual) Home Survey Booked
+      const aiStageId = '77740d71-fd7e-47df-a9de-a7f1e4db0b87'; // (AI Bot) Home Survey Booked
+      const manualStageId = '08f2f487-14c5-44ef-b2f7-0021c605efb2'; // (Manual) Home Survey Booked
       
       const allOpportunities = await this.goHighLevelService.getOpportunitiesByStages(
         credentials.accessToken,
@@ -2911,8 +2911,8 @@ export class OpportunitiesService {
       }
 
       // Get opportunities from AI and Manual stages
-      const aiStageId = '8904bbe1-53a3-468e-94e4-f13cb04a4947'; // (AI Bot) Home Survey Booked
-      const manualStageId = '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c'; // (Manual) Home Survey Booked
+      const aiStageId = '77740d71-fd7e-47df-a9de-a7f1e4db0b87'; // (AI Bot) Home Survey Booked
+      const manualStageId = '08f2f487-14c5-44ef-b2f7-0021c605efb2'; // (Manual) Home Survey Booked
       
       const allOpportunities = await this.goHighLevelService.getOpportunitiesByStages(
         credentials.accessToken,
@@ -3041,8 +3041,8 @@ export class OpportunitiesService {
       }
 
       // Get opportunities from AI and Manual stages (same as working endpoints)
-      const aiStageId = '8904bbe1-53a3-468e-94e4-f13cb04a4947'; // (AI Bot) Home Survey Booked
-      const manualStageId = '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c'; // (Manual) Home Survey Booked
+      const aiStageId = '77740d71-fd7e-47df-a9de-a7f1e4db0b87'; // (AI Bot) Home Survey Booked
+      const manualStageId = '08f2f487-14c5-44ef-b2f7-0021c605efb2'; // (Manual) Home Survey Booked
       
       const allOpportunities = await this.goHighLevelService.getOpportunitiesByStages(
         credentials.accessToken,
@@ -3126,7 +3126,7 @@ export class OpportunitiesService {
       this.logger.log(`📅 Analyzing data for ${targetMonth}/${targetYear}`);
 
       // Private Customers pipeline ID
-      const privateCustomersPipelineId = 'FxPA8fVU11VnudThxhFy';
+      const privateCustomersPipelineId = 'i0s1jnH7YZ1rgsHWVfTa';
 
       // Get all opportunities from Private Customers pipeline
       const pipelineOpportunities = await this.goHighLevelService.getOpportunitiesByPipeline(
@@ -3750,7 +3750,7 @@ export class OpportunitiesService {
       this.logger.log(`Updating opportunity ${opportunityId} status to ${status}${stageId ? ` and stage to ${stageId}` : ''}`);
 
       // Use the Private Customers pipeline ID
-      const pipelineId = 'FxPA8fVU11VnudThxhFy';
+      const pipelineId = 'i0s1jnH7YZ1rgsHWVfTa';
 
       const result = await this.goHighLevelService.updateOpportunityStatus(
         credentials.accessToken,
@@ -3779,7 +3779,7 @@ export class OpportunitiesService {
   async moveOpportunityToSignedContract(opportunityId: string): Promise<{ success: boolean; error?: string; data?: any }> {
     try {
       // Stage ID for "Signed Contract" from the pipeline test screen
-      const signedContractStageId = '09107d21-d594-4301-9d27-de95525bef11';
+      const signedContractStageId = '10153e01-4bd3-4869-ad9e-ef8e5cea1c00';
       
       this.logger.log(`Moving opportunity ${opportunityId} to Signed Contract stage`);
       
@@ -3810,8 +3810,8 @@ export class OpportunitiesService {
 
       // Only get opportunities from the specific stages (AI and Manual Home Survey Booked)
       // This is much faster than fetching all opportunities
-      const aiStageId = '8904bbe1-53a3-468e-94e4-f13cb04a4947'; // (AI Bot) Home Survey Booked
-      const manualStageId = '97cbf1b8-31c2-4486-9edc-5a3d5d0c198c'; // (Manual) Home Survey Booked
+      const aiStageId = '77740d71-fd7e-47df-a9de-a7f1e4db0b87'; // (AI Bot) Home Survey Booked
+      const manualStageId = '08f2f487-14c5-44ef-b2f7-0021c605efb2'; // (Manual) Home Survey Booked
       
       this.logger.log(`📊 Fetching opportunities from 2 specific stages only (much faster)`);
       

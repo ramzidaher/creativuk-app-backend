@@ -3,7 +3,7 @@ import axios from 'axios';
 
 @Injectable()
 export class GoHighLevelService {
-  private readonly baseUrl = 'https://rest.gohighlevel.com/v1';
+  private readonly baseUrl = 'https://services.leadconnectorhq.com';
   private readonly logger = new Logger(GoHighLevelService.name);
   
   // Simple in-memory cache for API responses
@@ -36,6 +36,7 @@ export class GoHighLevelService {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      Version: '2021-07-28',
     };
   }
 
@@ -91,7 +92,7 @@ export class GoHighLevelService {
     
     try {
       // Only fetch from "Private Customers" pipeline
-      const pipelineId = 'FxPA8fVU11VnudThxhFy'; // Private Customers pipeline ID
+      const pipelineId = 'i0s1jnH7YZ1rgsHWVfTa'; // Private Customers pipeline ID
       let allOpportunities: any[] = [];
       
       // Fetch opportunities for each stage
